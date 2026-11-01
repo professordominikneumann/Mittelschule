@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
+<title>Mittelschule</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Layout: school-hall overview — big name, subject shelves, each game a large tappable tile */
+:root{
+  --bg:#EEF2F4; --surface:#FFFFFF; --ink:#1A2630; --muted:#5A6B77; --line:#D5DEE4;
+  --en:#1E7552; --en-soft:#DDEFE4; --gold:#F3B708; --gold-dk:#A87700;
+  --display:"Fredoka","Baloo 2","Trebuchet MS",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#10171C; --surface:#1A242B; --ink:#E7EEF2; --muted:#9AABB6; --line:#2A3740;
+  --en:#45C08A; --en-soft:#183327; --gold:#F6C22C; --gold-dk:#B98600; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#10171C; --surface:#1A242B; --ink:#E7EEF2; --muted:#9AABB6; --line:#2A3740;
+  --en:#45C08A; --en-soft:#183327; --gold:#F6C22C; --gold-dk:#B98600; color-scheme:dark}
+
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:900px;margin:0 auto;padding-block:32px 48px;display:flex;flex-direction:column;gap:32px}
+header{display:flex;flex-direction:column;gap:6px}
+.eyebrow{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(40px,11vw,68px);line-height:1;margin:0;letter-spacing:-.01em;text-wrap:balance}
+header p{margin:0;color:var(--muted);max-width:55ch}
+section{display:flex;flex-direction:column;gap:12px}
+h2{font-family:var(--display);font-weight:600;font-size:22px;margin:0;display:flex;align-items:center;gap:10px}
+h2 .dot{width:14px;height:14px;border-radius:50%;background:var(--c)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.tile{display:flex;flex-direction:column;gap:12px;background:var(--surface);border-radius:20px;padding:18px;text-decoration:none;color:inherit;
+  border:2px solid transparent;transition:transform .15s,border-color .15s}
+a.tile:hover{transform:translateY(-3px);border-color:var(--c)}
+a.tile:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.art{height:120px;border-radius:14px;background:var(--soft);display:grid;place-items:center;position:relative;overflow:hidden}
+.tile h3{font-family:var(--display);font-weight:700;font-size:24px;margin:0;line-height:1.1}
+.tile p{margin:0;color:var(--muted);font-size:15px}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--soft);color:var(--c)}
+.play{margin-top:auto;display:flex;align-items:center;justify-content:center;gap:8px;background:var(--c);color:var(--surface);
+  font:700 18px var(--display);border-radius:12px;padding:12px}
+.soon{border:2px dashed var(--line);background:transparent;justify-content:center;align-items:center;text-align:center;min-height:200px;color:var(--muted)}
+.soon h3{font-size:20px;color:var(--muted)}
+footer{color:var(--muted);font-size:14px}
+@media (prefers-reduced-motion: reduce){.tile{transition:none}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Lernspiele</div>
+    <h1>Mittelschule</h1>
+    <p>Wähle ein Spiel aus.</p>
+  </header>
+  <main id="shelves"></main>
+  <footer>Weitere Spiele kommen bald dazu.</footer>
+</div>
+
+<script>
+// Neue Spiele hier eintragen: Fach, Titel, Beschreibung, Klasse, Thema, Link
+const SUBJECTS={
+  englisch:{name:'Englisch',c:'var(--en)',soft:'var(--en-soft)'}
+};
+const GAMES=[
+  {fach:'englisch',title:'English Workshop',klasse:'1. Klasse',thema:'Unit 2 · At the zoo',
+   text:'Vokabeln üben: Münzen mit der richtigen Übersetzung fangen oder Wörter schreiben. Mit den Münzen kaufst du Zoo-Sticker.',
+   url:'english-workshop.html',art:'coins'}
+];
+
+const ART={coins:`<svg viewBox="0 0 200 110" width="200" height="110" aria-hidden="true">
+  <g fill="var(--gold)" stroke="var(--gold-dk)" stroke-width="3">
+    <circle cx="58" cy="30" r="15"/><circle cx="142" cy="22" r="13"/><circle cx="100" cy="12" r="10"/></g>
+  <rect x="62" y="60" width="76" height="40" rx="6" fill="#7A4A22"/><rect x="62" y="52" width="76" height="16" rx="6" fill="#9B6233"/>
+  <rect x="62" y="66" width="76" height="5" fill="var(--gold)"/><rect x="95" y="60" width="10" height="16" fill="var(--gold)"/></svg>`};
+
+const main=document.getElementById('shelves');
+main.style.cssText='display:flex;flex-direction:column;gap:32px';
+Object.entries(SUBJECTS).forEach(([key,s])=>{
+  const games=GAMES.filter(g=>g.fach===key);
+  const sec=document.createElement('section');sec.style.setProperty('--c',s.c);sec.style.setProperty('--soft',s.soft);
+  sec.innerHTML=`<h2><span class="dot"></span>${s.name}</h2><div class="grid">${games.map(g=>`
+    <a class="tile" href="${g.url}">
+      <div class="art">${ART[g.art]||''}</div>
+      <div class="tags"><span class="tag">${g.klasse}</span><span class="tag">${g.thema}</span></div>
+      <h3>${g.title}</h3><p>${g.text}</p>
+      <span class="play">Spielen ›</span>
+    </a>`).join('')}
+    <div class="tile soon"><h3>Bald mehr</h3><p>Hier kommen neue Spiele dazu.</p></div></div>`;
+  main.appendChild(sec);
+});
+</script>
+</body>
+</html>

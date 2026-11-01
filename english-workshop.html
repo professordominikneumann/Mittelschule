@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
+<title>English Workshop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Layout: one-screen arcade app — status bar, question card, falling-coin stage, big thumb controls */
+:root{
+  --bg:#E6F0E8; --surface:#FFFFFF; --ink:#1B2A22; --muted:#56695E;
+  --accent:#1E7552; --accent-ink:#FFFFFF; --gold:#F3B708; --gold-dk:#A87700;
+  --danger:#C93C3C; --ok:#1E8A52; --lane:#D3E3D7; --ground:#B9D2BF;
+  --display:"Fredoka","Baloo 2","Trebuchet MS",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E1813; --surface:#17241D; --ink:#E6F0EA; --muted:#97AEA1;
+  --accent:#45C08A; --accent-ink:#06120C; --gold:#F6C22C; --gold-dk:#B98600;
+  --danger:#F06A6A; --ok:#4FD08F; --lane:#1A2A22; --ground:#22382C; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1813; --surface:#17241D; --ink:#E6F0EA; --muted:#97AEA1;
+  --accent:#45C08A; --accent-ink:#06120C; --gold:#F6C22C; --gold-dk:#B98600;
+  --danger:#F06A6A; --ok:#4FD08F; --lane:#1A2A22; --ground:#22382C; color-scheme:dark}
+
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  overscroll-behavior:none;-webkit-user-select:none;user-select:none}
+.app{height:100%;max-width:620px;margin:0 auto;display:flex;flex-direction:column;gap:10px;padding-block:10px;position:relative}
+.bar{display:flex;align-items:center;gap:12px;font-family:var(--display);font-weight:600}
+.coins{display:flex;align-items:center;gap:6px;font-size:22px;font-variant-numeric:tabular-nums}
+.hearts{font-size:20px;letter-spacing:2px;color:var(--danger)}
+.hearts .lost{opacity:.2}
+.progress{margin-left:auto;color:var(--muted);font-size:15px;font-variant-numeric:tabular-nums}
+.iconbtn{border:0;background:var(--surface);color:var(--ink);width:38px;height:38px;border-radius:10px;font-size:18px;cursor:pointer;display:grid;place-items:center}
+.card{background:var(--surface);border-radius:16px;padding:12px 16px;text-align:center}
+.card .ask{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+.card .word{font-family:var(--display);font-weight:700;font-size:clamp(26px,7vw,36px);line-height:1.15;margin-top:2px;text-wrap:balance;min-height:1.15em}
+.stage{flex:1;min-height:0;position:relative;border-radius:18px;overflow:hidden;background:var(--surface)}
+canvas{display:block;width:100%;height:100%;touch-action:none;cursor:pointer}
+.toast{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);padding:10px 18px;border-radius:14px;
+  font-family:var(--display);font-weight:600;font-size:20px;text-align:center;max-width:90%;pointer-events:none;
+  background:var(--surface);box-shadow:0 6px 24px rgb(0 0 0 / .18);transition:opacity .2s}
+.toast.ok{color:var(--ok)} .toast.bad{color:var(--danger)}
+.toast small{display:block;font-family:var(--body);font-size:15px;color:var(--ink);margin-top:4px;font-weight:400}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.controls button{height:58px;border:0;border-radius:14px;background:var(--accent);color:var(--accent-ink);cursor:pointer;display:grid;place-items:center}
+.controls button:active{transform:scale(.97)}
+button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.card .hintline{font:600 20px var(--display);letter-spacing:.08em;color:var(--accent);margin-top:4px;overflow-wrap:anywhere;white-space:pre-wrap}
+.typer{display:flex;flex-direction:column;gap:8px}
+.typer .row{display:flex;gap:8px}
+.typer input{flex:1;min-width:0;height:58px;border:3px solid var(--lane);border-radius:14px;background:var(--surface);color:var(--ink);font:600 22px var(--display);padding:0 14px}
+.typer input:focus{outline:none;border-color:var(--accent)}
+.typer input.ok{border-color:var(--ok);color:var(--ok)} .typer input.bad{border-color:var(--danger);color:var(--danger)}
+.typer .check{height:58px;border:0;border-radius:14px;background:var(--accent);color:var(--accent-ink);font:700 18px var(--display);padding:0 18px;cursor:pointer;flex:none}
+.typer .small{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.typer .small button{border:0;background:var(--surface);color:var(--ink);font:600 17px var(--display);height:42px;min-width:44px;padding:0 12px;border-radius:10px;cursor:pointer}
+#umlauts{display:flex;gap:6px}
+.app.typing .typer{order:2} .app.typing .stage{order:3;min-height:130px}
+
+.overlay{position:absolute;inset:0;background:var(--bg);display:flex;flex-direction:column;gap:16px;overflow-y:auto;padding-block:18px;z-index:5}
+.overlay h1{font-family:var(--display);font-weight:700;font-size:clamp(34px,10vw,48px);line-height:1;margin:0;text-wrap:balance}
+.overlay h1 span{color:var(--gold-dk)}
+.overlay h2{font-family:var(--display);font-weight:600;font-size:18px;margin:0}
+.overlay p{margin:0;line-height:1.5;color:var(--muted);max-width:60ch}
+.unit{font-size:13px;text-transform:uppercase;letter-spacing:.1em;font-weight:700;color:var(--accent)}
+.group{display:flex;flex-direction:column;gap:8px}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:var(--surface);padding:5px;border-radius:14px}
+.seg.two{grid-template-columns:repeat(2,1fr)}
+.seg button{border:0;background:transparent;color:var(--ink);padding:10px 4px;border-radius:10px;font:600 15px var(--display);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.go{border:0;background:var(--gold);color:#3A2700;font:700 22px var(--display);padding:16px;border-radius:16px;cursor:pointer;box-shadow:0 4px 0 var(--gold-dk)}
+.go:active{transform:translateY(2px);box-shadow:0 2px 0 var(--gold-dk)}
+.go.alt{background:var(--surface);color:var(--ink);box-shadow:none;font-size:18px}
+.how{background:var(--surface);border-radius:14px;padding:12px 14px;line-height:1.5;font-size:15px}
+.how b{font-family:var(--display);font-weight:600}
+details{background:var(--surface);border-radius:14px;padding:10px 14px}
+summary{cursor:pointer;font:600 16px var(--display)}
+.vocab{width:100%;border-collapse:collapse;margin-top:8px;font-size:15px}
+.vocab td{padding:5px 4px;border-top:1px solid var(--lane);vertical-align:top}
+.vocab td:first-child{font-weight:700}
+.result{display:flex;gap:10px;flex-wrap:wrap}
+.stat{flex:1 1 120px;background:var(--surface);border-radius:14px;padding:12px;text-align:center}
+.stat b{display:block;font:700 30px var(--display);font-variant-numeric:tabular-nums}
+.stat span{color:var(--muted);font-size:14px}
+.stars{font-size:40px;letter-spacing:6px;color:var(--gold)} .stars .off{opacity:.2}
+.miss{margin:0;padding-left:20px;line-height:1.7}
+.wallet{display:inline-flex;align-items:center;gap:8px;background:var(--surface);border-radius:999px;padding:8px 14px;font:700 20px var(--display);font-variant-numeric:tabular-nums;align-self:flex-start}
+.shophead{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.shophead .wallet{margin-left:auto}
+.back{border:0;background:var(--surface);color:var(--ink);font:600 16px var(--display);padding:10px 14px;border-radius:12px;cursor:pointer}
+.album{color:var(--muted);font-size:15px}
+.albumbar{height:10px;background:var(--surface);border-radius:999px;overflow:hidden}
+.albumbar i{display:block;height:100%;background:var(--accent);border-radius:999px;transition:width .4s}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.st{background:var(--surface);border-radius:16px;padding:12px 8px 10px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;position:relative}
+.st .pic{font-size:52px;line-height:1;width:84px;height:84px;display:grid;place-items:center;border-radius:50%;background:#fff;
+  box-shadow:0 0 0 4px #fff,0 3px 10px rgb(0 0 0 / .18);transform:rotate(var(--rot));transition:transform .25s}
+.st.locked .pic{filter:grayscale(1) brightness(.35) contrast(.6);opacity:.55;box-shadow:0 0 0 4px var(--lane)}
+.st .en{font:700 17px var(--display)}
+.st .de{font-size:13px;color:var(--muted);min-height:1.2em}
+.st .tier{position:absolute;top:8px;left:8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:2px 7px;border-radius:999px;background:var(--lane);color:var(--muted)}
+.st .tier.r2{background:#D6F2DF;color:#1E6B40} .st .tier.r3{background:#DCE8FF;color:#2A4FA8} .st .tier.r4{background:#F1DDFF;color:#7230A8} .st .tier.r5{background:#FFE7A8;color:#7A5200}
+.st button{width:100%;border:0;border-radius:10px;padding:9px 4px;font:700 15px var(--display);cursor:pointer;background:var(--gold);color:#3A2700;display:flex;align-items:center;justify-content:center;gap:5px}
+.st button:disabled{background:var(--lane);color:var(--muted);cursor:not-allowed}
+.st button.sure{background:var(--accent);color:var(--accent-ink)}
+.st .owned{font:600 14px var(--display);color:var(--ok);padding:9px 0}
+.st.pop .pic{animation:pop .6s}
+@keyframes pop{0%{transform:scale(.4) rotate(-30deg)}60%{transform:scale(1.25) rotate(8deg)}100%{transform:scale(1) rotate(var(--rot))}}
+.btnrow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.go.shop{background:var(--accent);color:var(--accent-ink);box-shadow:0 4px 0 color-mix(in srgb,var(--accent) 60%,#000)}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="bar">
+    <div class="coins" aria-label="Münzen"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="var(--gold)" stroke="var(--gold-dk)" stroke-width="2"/><circle cx="12" cy="12" r="6" fill="none" stroke="var(--gold-dk)" stroke-width="1.5" opacity=".6"/></svg><span id="coins">0</span></div>
+    <div class="hearts" id="hearts" aria-label="Leben"></div>
+    <div class="progress" id="progress"></div>
+    <button class="iconbtn" id="mute" aria-label="Ton an/aus">🔊</button>
+  </div>
+  <div class="card">
+    <div class="ask" id="ask">Wie heißt das auf Englisch?</div>
+    <div class="word" id="word">Baum</div>
+    <div class="hintline" id="hintline" hidden></div>
+  </div>
+  <div class="stage" id="stage">
+    <canvas id="cv"></canvas>
+    <div class="toast" id="toast" hidden></div>
+  </div>
+  <div class="controls">
+    <button id="left" aria-label="nach links"><svg width="34" height="34" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <button id="right" aria-label="nach rechts"><svg width="34" height="34" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  </div>
+
+  <form class="typer" id="typer" hidden autocomplete="off">
+    <div class="row">
+      <input id="answer" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="go" placeholder="Hier tippen …" aria-label="Deine Antwort">
+      <button class="check" type="submit" id="checkBtn">Prüfen</button>
+    </div>
+    <div class="small">
+      <button type="button" id="hintBtn">💡 Tipp</button>
+      <span id="umlauts"><button type="button">ä</button><button type="button">ö</button><button type="button">ü</button><button type="button">ß</button></span>
+    </div>
+  </form>
+
+  <div class="overlay" id="menu">
+    <div class="unit">English · 1. Klasse · Unit 2 · At the zoo</div>
+    <h1>English <span>Workshop</span></h1>
+    <div class="wallet" title="Gesparte Münzen"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="var(--gold)" stroke="var(--gold-dk)" stroke-width="2"/></svg><span class="walletN">0</span><span style="font-size:14px;font-weight:500;color:var(--muted)">gespart</span></div>
+    <div class="how"><b>So geht's:</b> Oben steht ein Wort. Drei Münzen fallen herunter. Fang mit der Schatzkiste die Münze mit der richtigen Übersetzung! Bewegen mit den Pfeil-Tasten, den Knöpfen unten oder einfach auf die Spur tippen. Jede richtige Antwort = 1 Münze, jede 5. richtige Antwort hintereinander = 1 Bonus-Münze. Falsch = ein Herz weniger.<br><b>Wörter schreiben:</b> Tippe die Übersetzung ein. Richtig = 2 Münzen, mit 💡 Tipp = 1 Münze. Groß- und Kleinschreibung ist egal, statt ä/ö/ü/ß geht auch ae/oe/ue/ss. Du hast 5 Herzen.</div>
+    <div class="group"><h2>Spielart</h2>
+      <div class="seg two" id="playSeg">
+        <button data-v="catch" aria-pressed="true">Münzen fangen</button>
+        <button data-v="type">Wörter schreiben</button>
+      </div></div>
+    <div class="group"><h2>Richtung</h2>
+      <div class="seg" id="modeSeg">
+        <button data-v="de-en">Deutsch → Englisch</button>
+        <button data-v="en-de">Englisch → Deutsch</button>
+        <button data-v="mix" aria-pressed="true">Gemischt</button>
+      </div></div>
+    <div class="group"><h2>Wie viele Wörter?</h2>
+      <div class="seg" id="lenSeg">
+        <button data-v="10">10</button>
+        <button data-v="20" aria-pressed="true">20</button>
+        <button data-v="99">Alle 41</button>
+      </div></div>
+    <div class="group"><h2>Tempo</h2>
+      <div class="seg" id="spdSeg">
+        <button data-v="8">Gemütlich</button>
+        <button data-v="6" aria-pressed="true">Normal</button>
+        <button data-v="4.2">Schnell</button>
+      </div></div>
+    <button class="go" id="start">Los geht's!</button>
+    <button class="go shop" id="menuShop">Sticker-Shop</button>
+    <p id="best"></p>
+    <details><summary>Wörterliste ansehen (41 Wörter)</summary><table class="vocab" id="vocab"></table></details>
+  </div>
+
+  <div class="overlay" id="end" hidden>
+    <div class="unit" id="endUnit">Geschafft!</div>
+    <h1 id="endTitle">Super gemacht!</h1>
+    <div class="stars" id="stars"></div>
+    <div class="result">
+      <div class="stat"><b id="rCoins">0</b><span>Münzen</span></div>
+      <div class="stat"><b id="rRight">0</b><span>richtig</span></div>
+      <div class="stat"><b id="rBest">0</b><span>Rekord</span></div>
+    </div>
+    <div class="group" id="missBox"><h2>Diese Wörter noch üben</h2><ul class="miss" id="missList"></ul></div>
+    <p id="walletMsg"></p>
+    <button class="go shop" id="endShop">Sticker-Shop</button>
+    <button class="go" id="retryMiss">Nur Fehler üben</button>
+    <button class="go" id="again">Nochmal spielen</button>
+    <button class="go alt" id="toMenu">Zum Menü</button>
+  </div>
+
+  <div class="overlay" id="shop" hidden>
+    <div class="shophead">
+      <button class="back" id="shopBack">← Zurück</button>
+      <div class="wallet"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="var(--gold)" stroke="var(--gold-dk)" stroke-width="2"/></svg><span class="walletN">0</span></div>
+    </div>
+    <h1>Sticker-<span>Shop</span></h1>
+    <p>Kauf dir Zoo-Sticker mit deinen Münzen. Jeder Sticker hat seinen englischen Namen – lern ihn gleich mit!</p>
+    <div class="group">
+      <div class="album" id="albumTxt"></div>
+      <div class="albumbar"><i id="albumBar"></i></div>
+    </div>
+    <div class="grid" id="grid"></div>
+  </div>
+</div>
+
+<script>
+const WORDS=[
+["zoo","Zoo","n"],["beautiful","schön, hübsch","a"],["behind","hinter","p"],["big","groß","a"],
+["in front of","vor","p"],["next to","neben","p"],["now","jetzt","o"],["on","auf","p"],
+["there is (there's)","es gibt, da ist","s"],["there are","es gibt, da sind","s"],["tree","Baum","n"],
+["under","unter","p"],["What is it?","Was ist los?","s"],["where","wo","o"],["small","klein","a"],
+["adult","Erwachsene/r","n"],["at","bei; an","p"],["to bring","(mit-)bringen","v"],["but","aber","o"],
+["to feed","füttern","v"],["guide","(Reise-)Führer/in","n"],["to run around","herumlaufen","v"],
+["train","Zug","n"],["to","zu; bis","p"],["welcome","willkommen","o"],["from","aus","p"],
+["year","Jahr","n"],["he","er","r"],["she","sie (Einzahl)","r"],["to talk","sprechen, sich unterhalten","v"],
+["they","sie (Mehrzahl)","r"],["we","wir","r"],["for","für","p"],["happy","glücklich, fröhlich","a"],
+["to let somebody out","jemanden herauslassen","v"],["us","uns","r"],["car","Auto","n"],
+["At last.","Endlich.","s"],["How strange!","Wie komisch!","s"],["Let me see.","Lass mich mal schauen.","s"],
+["stone","Stein","n"]
+].map(([en,de,g],i)=>({id:i,en,de,g}));
+
+const $=id=>document.getElementById(id);
+const cv=$('cv'),ctx=cv.getContext('2d'),stage=$('stage');
+let W=0,H=0,DPR=1,C={};
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function readColors(){const s=getComputedStyle(document.documentElement);
+  ['gold','gold-dk','lane','ground','ink','muted','accent','danger','ok','surface'].forEach(k=>C[k]=s.getPropertyValue('--'+k).trim());}
+function resize(){const r=stage.getBoundingClientRect();DPR=Math.min(2,window.devicePixelRatio||1);
+  W=r.width;H=r.height;cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);readColors();
+  if(S.round)layoutRound();}
+new ResizeObserver(resize).observe(stage);
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>setTimeout(readColors,50));
+new MutationObserver(()=>setTimeout(readColors,50)).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+const S={mode:'mix',len:20,fall:6,deck:[],idx:0,coins:0,hearts:3,streak:0,correct:0,mistakes:[],state:'menu',round:null,lane:1,px:0,fx:[],timer:0,muted:store.get('cc-mute')==='1',best:+(store.get('cc-best')||0)};
+$('mute').textContent=S.muted?'🔇':'🔊';
+S.play='catch';S.maxHearts=3;
+S.wallet=+(store.get('cc-wallet')||0);
+if(store.get('cc-v2')!=='1'){S.wallet=Math.round(S.wallet/10);S.best=Math.round(S.best/10);store.set('cc-wallet',S.wallet);store.set('cc-best',S.best);store.set('cc-v2','1')}
+try{S.owned=JSON.parse(store.get('cc-owned')||'[]')}catch(e){S.owned=[]}
+if(!Array.isArray(S.owned))S.owned=[];
+
+// ---------- sticker shop ----------
+const TIERS={1:'normal',2:'gut',3:'selten',4:'super selten',5:'legendär'};
+const STICKERS=[
+["tree","🌳","Baum",3,1],["stone","🪨","Stein",3,1],["car","🚗","Auto",3,1],["train","🚂","Zug",3,1],
+["cat","🐱","Katze",3,1],["dog","🐶","Hund",3,1],["mouse","🐭","Maus",3,1],["rabbit","🐰","Hase",3,1],
+["duck","🦆","Ente",4,1],["chicken","🐔","Huhn",4,1],["pig","🐷","Schwein",4,1],["cow","🐮","Kuh",4,1],
+["frog","🐸","Frosch",4,1],["fish","🐟","Fisch",4,1],["bee","🐝","Biene",4,1],["snail","🐌","Schnecke",4,1],
+["parrot","🦜","Papagei",6,2],["monkey","🐒","Affe",6,2],["elephant","🐘","Elefant",6,2],["giraffe","🦒","Giraffe",6,2],
+["zebra","🦓","Zebra",7,2],["penguin","🐧","Pinguin",7,2],["turtle","🐢","Schildkröte",7,2],["owl","🦉","Eule",7,2],
+["butterfly","🦋","Schmetterling",8,2],["camel","🐫","Kamel",8,2],["bat","🦇","Fledermaus",8,2],["hedgehog","🦔","Igel",8,2],
+["lion","🦁","Löwe",12,3],["tiger","🐯","Tiger",12,3],["panda","🐼","Panda",12,3],["crocodile","🐊","Krokodil",12,3],
+["flamingo","🦩","Flamingo",14,3],["snake","🐍","Schlange",14,3],["gorilla","🦍","Gorilla",14,3],["peacock","🦚","Pfau",14,3],
+["kangaroo","🦘","Känguru",20,4],["koala","🐨","Koala",20,4],["hippo","🦛","Nilpferd",20,4],["rhino","🦏","Nashorn",20,4],
+["polar bear","🐻‍❄️","Eisbär",24,4],["octopus","🐙","Krake",24,4],["shark","🦈","Hai",24,4],["whale","🐳","Wal",24,4],
+["dinosaur","🦖","Dinosaurier – nicht im Zoo!",40,5],["dragon","🐉","Drache – nicht im Zoo!",40,5],["unicorn","🦄","Einhorn – nicht im Zoo!",50,5],["alien","👽","Außerirdischer – nicht im Zoo!",50,5]
+].map(([en,pic,de,price,tier],i)=>({id:en,en,pic,de,price,tier,rot:((i*37)%11-5)+'deg'}));
+let confirmId=null,popId=null;
+function saveShop(){store.set('cc-wallet',S.wallet);store.set('cc-owned',JSON.stringify(S.owned))}
+function showWallet(){document.querySelectorAll('.walletN').forEach(e=>e.textContent=S.wallet)}
+function renderShop(){showWallet();
+  const n=S.owned.length;$('albumTxt').textContent=n===STICKERS.length?`Album komplett! Alle ${n} Sticker gesammelt 🎉`:`Dein Album: ${n} von ${STICKERS.length} Stickern`;
+  $('albumBar').style.width=(n/STICKERS.length*100)+'%';
+  $('grid').innerHTML=STICKERS.map(s=>{const own=S.owned.includes(s.id),can=S.wallet>=s.price,sure=confirmId===s.id;
+    const coin='<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor" opacity=".35"/><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
+    return `<div class="st ${own?'':'locked'} ${popId===s.id?'pop':''}" style="--rot:${s.rot}">
+      <span class="tier r${s.tier}">${TIERS[s.tier]}</span>
+      <div class="pic" aria-hidden="true">${s.pic}</div>
+      <div class="en">${own?s.en:'???'}</div><div class="de">${own?s.de:''}</div>
+      ${own?'<div class="owned">✓ im Album</div>'
+        :`<button data-id="${s.id}" class="${sure?'sure':''}" ${can?'':'disabled'}>${sure?'Wirklich kaufen?':`${coin}${s.price}`}</button>`}
+    </div>`}).join('');
+  popId=null;}
+$('grid').addEventListener('click',e=>{const b=e.target.closest('button[data-id]');if(!b)return;const s=STICKERS.find(x=>x.id===b.dataset.id);
+  if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}
+  if(confirmId!==s.id){confirmId=s.id;beep(660,.06,'triangle',.06);return renderShop();}
+  if(S.wallet<s.price||S.owned.includes(s.id))return;
+  S.wallet-=s.price;S.owned.push(s.id);saveShop();confirmId=null;popId=s.id;
+  beep(784,.1,'square',.07);beep(1047,.1,'square',.07,.1);beep(1568,.25,'square',.07,.2);renderShop();});
+let shopFrom='menu';
+function openShop(from){shopFrom=from;confirmId=null;$(from).hidden=true;$('shop').hidden=false;$('shop').scrollTop=0;renderShop();}
+$('menuShop').addEventListener('click',()=>openShop('menu'));
+$('endShop').addEventListener('click',()=>openShop('end'));
+$('shopBack').addEventListener('click',()=>{$('shop').hidden=true;$(shopFrom).hidden=false;showWallet()});
+showWallet();
+
+// ---------- sound ----------
+let AC=null;
+function beep(f,d=.12,type='sine',vol=.15,delay=0){if(S.muted||!AC)return;const t=AC.currentTime+delay,o=AC.createOscillator(),g=AC.createGain();
+  o.type=type;o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+d);}
+const sndOk=()=>{beep(988,.08,'square',.08);beep(1319,.18,'square',.08,.08)};
+const sndBad=()=>{beep(220,.25,'sawtooth',.08)};
+const sndMove=()=>beep(520,.04,'triangle',.05);
+
+// ---------- helpers ----------
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+function distractors(item,n){
+  const ok=w=>w.id!==item.id&&w.en!==item.en&&w.de!==item.de&&!(w.de.startsWith('sie')&&item.de.startsWith('sie'))&&!(w.de.startsWith('es gibt')&&item.de.startsWith('es gibt'));
+  const same=shuffle(WORDS.filter(w=>ok(w)&&w.g===item.g)),rest=shuffle(WORDS.filter(w=>ok(w)&&w.g!==item.g));
+  const pool=Math.random()<.7?same.concat(rest):rest.concat(same);return pool.slice(0,n);}
+function wrap(text,maxW){
+  for(let fs=20;fs>=11;fs--){ctx.font=`600 ${fs}px ${getComputedStyle(document.documentElement).getPropertyValue('--display')}`;
+    const words=text.split(' '),lines=[];let cur='';
+    for(const w of words){const t=cur?cur+' '+w:w;if(ctx.measureText(t).width<=maxW||!cur)cur=t;else{lines.push(cur);cur=w}}
+    lines.push(cur);
+    if(lines.length<=3&&lines.every(l=>ctx.measureText(l).width<=maxW))return{fs,lines};
+  }return{fs:11,lines:[text]};}
+
+// ---------- game flow ----------
+function startGame(deck){
+  if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}
+  if(AC&&AC.state==='suspended')AC.resume();
+  S.maxHearts=S.play==='type'?5:3;
+  S.deck=deck;S.idx=0;S.coins=0;S.hearts=S.maxHearts;S.streak=0;S.correct=0;S.mistakes=[];S.fx=[];
+  S.lane=1;S.px=W/2;S.speedMul=1;
+  $('typer').hidden=S.play!=='type';document.querySelector('.controls').hidden=S.play==='type';
+  document.querySelector('.app').classList.toggle('typing',S.play==='type');
+  $('menu').hidden=true;$('end').hidden=true;hud();newRound();}
+// ---------- writing mode ----------
+function variants(text){const out=[];
+  text.split(/[;,]/).forEach(p=>{p=p.trim().replace(/\s*\((Einzahl|Mehrzahl)\)/,'');if(!p)return;
+    let forms=[p];const m=p.match(/\(([^)]*)\)/);
+    if(m){forms=[p.replace(/\s*\([^)]*\)\s*/,' ').trim(),p.replace(/\(([^)]*)\)/,(a,x)=>x.replace(/-$/,'')).trim()];
+      if(/^there/i.test(p))forms.push(m[1]);}
+    forms.flatMap(f=>{const s=f.match(/^(.*?)(\S+)\/(\w+)$/);return s?[s[1]+s[2],s[1]+s[2]+s[3]]:[f]})
+      .forEach(f=>{out.push(f);if(/^to /.test(f))out.push(f.slice(3))});});
+  return [...new Set(out)];}
+const norm=s=>s.toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss')
+  .replace(/[.!?'’‘`,;:"-]/g,'').replace(/\s+/g,' ').trim();
+function lev(a,b){if(Math.abs(a.length-b.length)>1)return 2;const d=[...Array(b.length+1).keys()];
+  for(let i=1;i<=a.length;i++){let p=d[0];d[0]=i;for(let j=1;j<=b.length;j++){const t=d[j];d[j]=Math.min(d[j]+1,d[j-1]+1,p+(a[i-1]===b[j-1]?0:1));p=t}}return d[b.length];}
+function typeRound(){
+  const item=S.deck[S.idx];const dir=S.mode==='mix'?(Math.random()<.5?'de-en':'en-de'):S.mode;
+  const target=dir==='de-en'?item.en:item.de,v=variants(target);
+  S.round={item,dir,opts:[],y:0,h:52,target,answers:v.map(norm),hintBase:v[0],hint:0};
+  $('ask').textContent=dir==='de-en'?'Schreib das auf Englisch':'Schreib das auf Deutsch';
+  $('word').textContent=dir==='de-en'?item.de:item.en;
+  $('hintline').hidden=true;$('umlauts').hidden=dir==='de-en';$('checkBtn').textContent='Prüfen';
+  const inp=$('answer');inp.value='';inp.className='';inp.readOnly=false;
+  S.state='type';hud();try{inp.focus({preventScroll:true})}catch(e){}}
+function checkTyped(){
+  const r=S.round,inp=$('answer'),val=norm(inp.value);
+  if(!val){inp.focus();return}
+  S.state='feedback';inp.readOnly=true;$('checkBtn').textContent='Weiter →';
+  const sol=`${r.item.en} = ${r.item.de}`;
+  if(r.answers.includes(val)){S.streak++;S.correct++;let gain=r.hint?1:2;if(S.streak%5===0)gain++;S.coins+=gain;sndOk();
+    burst(laneX(1),catchY(),gain);inp.className='ok';
+    toast('ok',S.streak>=3?`Richtig! ${S.streak}er-Serie 🔥`:'Richtig!',`+${gain} ${gain===1?'Münze':'Münzen'}`);S.timer=1.4;}
+  else{S.streak=0;if(!S.mistakes.includes(r.item))S.mistakes.push(r.item);inp.className='bad';
+    if(r.answers.some(a=>a.length>=4&&lev(a,val)<=1)){beep(330,.2,'triangle',.08);toast('bad','Fast richtig!',`Kein Herz weg. Richtig: <b>${r.target}</b>`)}
+    else{S.hearts--;sndBad();shake=.35;toast('bad','Leider falsch',sol)}
+    S.timer=4;}
+  hud();}
+$('typer').addEventListener('submit',e=>{e.preventDefault();if(S.state==='type')checkTyped();else if(S.state==='feedback')S.timer=0;});
+$('hintBtn').addEventListener('click',()=>{if(S.state!=='type')return;const r=S.round,b=r.hintBase;
+  r.hint=Math.min(r.hint+1,Math.max(1,b.replace(/ /g,'').length-1));let k=0;
+  $('hintline').textContent=[...b].map(c=>c===' '?' ':(k++<r.hint?c:'_')).join(' ');$('hintline').hidden=false;$('answer').focus();});
+$('umlauts').addEventListener('pointerdown',e=>{if(e.target.closest('button'))e.preventDefault()});
+$('umlauts').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||S.state!=='type')return;const inp=$('answer');
+  const s=inp.selectionStart??inp.value.length,en=inp.selectionEnd??s;inp.value=inp.value.slice(0,s)+b.textContent+inp.value.slice(en);
+  inp.setSelectionRange(s+1,s+1);inp.focus();});
+
+function newRound(){
+  if(S.play==='type')return typeRound();
+  const item=S.deck[S.idx];const dir=S.mode==='mix'?(Math.random()<.5?'de-en':'en-de'):S.mode;
+  const opts=shuffle([item,...distractors(item,2)]).map((w,i)=>({w,lane:i,correct:w.id===item.id,text:dir==='de-en'?w.en:w.de,alpha:1}));
+  S.round={item,dir,opts,y:0,h:52};
+  $('ask').textContent=dir==='de-en'?'Wie heißt das auf Englisch?':'Wie heißt das auf Deutsch?';
+  $('word').textContent=dir==='de-en'?item.de:item.en;
+  layoutRound();S.round.y=-S.round.h;S.state='fall';hud();}
+function layoutRound(){const r=S.round,lw=W/3;let h=52;
+  r.opts.forEach(o=>{const m=wrap(o.text,lw-30);o.fs=m.fs;o.lines=m.lines;h=Math.max(h,m.lines.length*m.fs*1.2+26)});r.h=h;}
+const catchY=()=>H-78;
+function resolve(){
+  const r=S.round,o=r.opts.find(o=>o.lane===S.lane);S.state='feedback';
+  const right=r.opts.find(o=>o.correct);
+  if(o.correct){S.streak++;S.correct++;const gain=S.streak%5===0?2:1;S.coins+=gain;sndOk();
+    burst(laneX(o.lane),catchY(),gain);S.speedMul=Math.max(.55,S.speedMul*.96);
+    toast('ok',S.streak>=3?`Richtig! ${S.streak}er-Serie 🔥`:'Richtig!',gain===2?'+1 Münze +1 Serien-Bonus':'+1 Münze');S.timer=reduce?1.1:.95;
+    r.opts.forEach(x=>{x.caught=x===o});}
+  else{S.hearts--;S.streak=0;if(!S.mistakes.includes(r.item))S.mistakes.push(r.item);sndBad();
+    toast('bad','Leider falsch',`${r.item.en} = ${r.item.de}`);S.timer=2.2;r.opts.forEach(x=>{x.caught=false;x.show=x.correct});
+    shake=.35;}
+  hud();}
+function next(){$('toast').hidden=true;S.idx++;
+  if(S.hearts<=0||S.idx>=S.deck.length)return endGame();newRound();}
+function endGame(){S.state='end';S.round=null;$('answer').blur();
+  const total=S.idx>=S.deck.length?S.deck.length:S.idx+1, rate=S.correct/Math.max(1,S.deck.length);
+  if(S.coins>S.best){S.best=S.coins;store.set('cc-best',S.best)}
+  S.wallet+=S.coins;saveShop();showWallet();
+  $('walletMsg').textContent=`+${S.coins} ${S.coins===1?'Münze':'Münzen'} in deine Spardose. Jetzt hast du ${S.wallet} Münzen für Sticker.`;
+  const stars=rate>=.9?3:rate>=.65?2:rate>=.35?1:0;
+  $('stars').innerHTML=[0,1,2].map(i=>`<span class="${i<stars?'':'off'}">★</span>`).join('');
+  $('endTitle').textContent=S.hearts<=0?'Keine Herzen mehr!':stars===3?'Super gemacht!':stars===2?'Gut gemacht!':'Weiter üben!';
+  $('endUnit').textContent=S.hearts<=0?`Nach ${total} von ${S.deck.length} Wörtern`:`Alle ${S.deck.length} Wörter geschafft`;
+  $('rCoins').textContent=S.coins;$('rRight').textContent=`${S.correct}/${S.deck.length}`;$('rBest').textContent=S.best;
+  $('missBox').hidden=$('retryMiss').hidden=!S.mistakes.length;
+  $('missList').innerHTML=S.mistakes.map(w=>`<li><b>${w.en}</b> – ${w.de}</li>`).join('');
+  $('end').hidden=false;$('toast').hidden=true;updateBest();}
+function hud(){$('coins').textContent=S.coins;
+  $('hearts').innerHTML=[...Array(S.maxHearts||3).keys()].map(i=>`<span class="${i<S.hearts?'':'lost'}">♥</span>`).join('');
+  $('progress').textContent=S.deck.length?`${Math.min(S.idx+1,S.deck.length)} / ${S.deck.length}`:'';}
+function toast(kind,title,sub){const t=$('toast');t.className='toast '+kind;t.innerHTML=`${title}<small>${sub}</small>`;t.hidden=false;}
+function updateBest(){$('best').textContent=S.best?`Dein Rekord: ${S.best} Münzen`:'';}
+
+// ---------- input ----------
+function move(d){if(S.state==='menu'||S.state==='end')return;const n=Math.max(0,Math.min(2,S.lane+d));if(n!==S.lane){S.lane=n;sndMove()}}
+$('left').addEventListener('click',()=>move(-1));$('right').addEventListener('click',()=>move(1));
+addEventListener('keydown',e=>{if(S.play==='type')return;if(e.key==='ArrowLeft'||e.key==='a'){move(-1);e.preventDefault()}
+  if(e.key==='ArrowRight'||e.key==='d'){move(1);e.preventDefault()}});
+cv.addEventListener('pointerdown',e=>{if(S.play==='type'||(S.state!=='fall'&&S.state!=='feedback'))return;const r=cv.getBoundingClientRect();
+  const l=Math.max(0,Math.min(2,Math.floor((e.clientX-r.left)/(r.width/3))));if(l!==S.lane){S.lane=l;sndMove()}});
+$('mute').addEventListener('click',()=>{S.muted=!S.muted;store.set('cc-mute',S.muted?'1':'0');$('mute').textContent=S.muted?'🔇':'🔊'});
+function seg(id,key,num){$(id).addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  $(id).querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));S[key]=num?+b.dataset.v:b.dataset.v})}
+seg('playSeg','play');seg('modeSeg','mode');seg('lenSeg','len',1);seg('spdSeg','fall',1);
+$('start').addEventListener('click',()=>startGame(shuffle(WORDS).slice(0,S.len)));
+$('again').addEventListener('click',()=>startGame(shuffle(WORDS).slice(0,S.len)));
+$('retryMiss').addEventListener('click',()=>startGame(shuffle(S.mistakes)));
+$('toMenu').addEventListener('click',()=>{$('end').hidden=true;$('menu').hidden=false;S.state='menu'});
+$('vocab').innerHTML=WORDS.map(w=>`<tr><td>${w.en}</td><td>${w.de}</td></tr>`).join('');
+updateBest();
+
+// ---------- render ----------
+const laneX=i=>W/3*(i+.5);
+let shake=0;
+function burst(x,y,gain){for(let i=0;i<14;i++){const a=-Math.PI/2+(Math.random()-.5)*2.4,v=160+Math.random()*220;
+  S.fx.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:.8,r:4+Math.random()*4,t:'c'})}
+  S.fx.push({x,y:y-30,vx:0,vy:-60,life:1,t:'txt',s:'+'+gain});}
+function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+function drawCoin(o,y){const lw=W/3,w=lw-14,x=laneX(o.lane)-w/2,h=S.round.h;
+  ctx.save();ctx.globalAlpha=o.alpha;
+  ctx.fillStyle=C['gold-dk'];rr(x,y+4,w,h,h/2>22?22:h/2);ctx.fill();
+  const g=ctx.createLinearGradient(0,y,0,y+h);g.addColorStop(0,'#FFE27A');g.addColorStop(.55,C.gold);g.addColorStop(1,'#E0A100');
+  ctx.fillStyle=g;rr(x,y,w,h,h/2>22?22:h/2);ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=2;rr(x+5,y+5,w-10,h-10,14);ctx.stroke();
+  if(o.show){ctx.strokeStyle=C.ok;ctx.lineWidth=4;rr(x-3,y-3,w+6,h+6,24);ctx.stroke();}
+  ctx.fillStyle='#3A2700';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.font=`600 ${o.fs}px ${getComputedStyle(document.documentElement).getPropertyValue('--display')}`;
+  const lh=o.fs*1.2,start=y+h/2-(o.lines.length-1)*lh/2;
+  o.lines.forEach((l,i)=>ctx.fillText(l,laneX(o.lane),start+i*lh));ctx.restore();}
+function drawChest(x,y){const w=Math.min(W/3*.75,120),h=46;
+  ctx.save();ctx.translate(x,y);
+  ctx.fillStyle='rgba(0,0,0,.15)';ctx.beginPath();ctx.ellipse(0,h+8,w/2,6,0,0,7);ctx.fill();
+  ctx.fillStyle='#7A4A22';rr(-w/2,8,w,h,8);ctx.fill();
+  ctx.fillStyle='#9B6233';rr(-w/2,0,w,18,8);ctx.fill();
+  ctx.fillStyle=C.gold;ctx.fillRect(-w/2,16,w,5);ctx.fillRect(-6,10,12,20);
+  ctx.fillStyle='#3A2700';ctx.fillRect(-2,18,4,7);
+  ctx.fillStyle=C.gold;ctx.fillRect(-w/2+10,8,6,h);ctx.fillRect(w/2-16,8,6,h);
+  ctx.restore();}
+let last=performance.now();
+function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;
+  if(S.state==='fall'){const dist=catchY()+S.round.h;S.round.y+=dist/(S.fall*S.speedMul)*dt;
+    if(S.round.y+S.round.h>=catchY()+6)resolve();}
+  else if(S.state==='feedback'){S.timer-=dt;S.round.opts.forEach(o=>{if(o.caught)o.alpha=Math.max(0,o.alpha-dt*5);else if(!o.show)o.alpha=Math.max(.15,o.alpha-dt*3)});
+    if(S.timer<=0)next();}
+  const tx=laneX(S.lane);S.px+=(tx-S.px)*Math.min(1,dt*16);
+  // draw
+  ctx.save();ctx.clearRect(0,0,W,H);
+  if(shake>0){shake-=dt;ctx.translate((Math.random()-.5)*8,0)}
+  ctx.fillStyle=C.surface;ctx.fillRect(0,0,W,H);
+  for(let i=0;i<3;i++){if(i===S.lane&&S.state!=='menu'&&S.play==='catch'){ctx.fillStyle=C.lane;ctx.fillRect(W/3*i,0,W/3,H)}}
+  ctx.strokeStyle=C.lane;ctx.setLineDash([6,8]);ctx.lineWidth=2;
+  (S.play==='catch'?[1,2]:[]).forEach(i=>{ctx.beginPath();ctx.moveTo(W/3*i,0);ctx.lineTo(W/3*i,H);ctx.stroke()});ctx.setLineDash([]);
+  ctx.fillStyle=C.ground;ctx.fillRect(0,H-18,W,18);
+  if(S.round&&(S.state==='fall'||S.state==='feedback'))S.round.opts.forEach(o=>drawCoin(o,S.round.y));
+  if(S.state!=='menu')drawChest(S.px,catchY());
+  S.fx=S.fx.filter(p=>(p.life-=dt)>0);
+  S.fx.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;if(p.t==='c'){p.vy+=500*dt;ctx.fillStyle=C.gold;ctx.globalAlpha=Math.min(1,p.life*2);
+    ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,7);ctx.fill()}else{ctx.globalAlpha=Math.min(1,p.life*1.5);ctx.fillStyle=C['gold-dk'];
+    ctx.font=`700 26px ${getComputedStyle(document.documentElement).getPropertyValue('--display')}`;ctx.textAlign='center';ctx.fillText(p.s,p.x,p.y)}ctx.globalAlpha=1});
+  ctx.restore();requestAnimationFrame(frame);}
+requestAnimationFrame(frame);
+hud();
+</script>
+</body>
+</html>
