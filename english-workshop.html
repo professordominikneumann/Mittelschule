@@ -34,7 +34,13 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16p
 .coins{display:flex;align-items:center;gap:6px;font-size:22px;font-variant-numeric:tabular-nums}
 .hearts{font-size:20px;letter-spacing:2px;color:var(--danger)}
 .hearts .lost{opacity:.2}
-.progress{margin-left:auto;color:var(--muted);font-size:15px;font-variant-numeric:tabular-nums}
+.progress{color:var(--muted);font-size:15px;font-variant-numeric:tabular-nums}
+.timer{margin-left:auto;color:var(--muted);font-size:15px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tablewrap{flex:none;min-width:0;overflow-x:auto;background:var(--surface);border-radius:14px}
+.logt{width:100%;border-collapse:collapse;font-size:15px;font-variant-numeric:tabular-nums}
+.logt th,.logt td{padding:8px 10px;text-align:left;white-space:nowrap;border-top:1px solid var(--lane)}
+.logt th{border-top:0;font:600 14px var(--display);color:var(--muted)}
+.logt .ab{color:var(--muted);font-size:13px}
 .iconbtn{border:0;background:var(--surface);color:var(--ink);width:38px;height:38px;border-radius:10px;font-size:18px;cursor:pointer;display:grid;place-items:center}
 .card{background:var(--surface);border-radius:16px;padding:12px 16px;text-align:center}
 .card .ask{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
@@ -122,6 +128,7 @@ summary{cursor:pointer;font:600 16px var(--display)}
   <div class="bar">
     <div class="coins" aria-label="Münzen"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="var(--gold)" stroke="var(--gold-dk)" stroke-width="2"/><circle cx="12" cy="12" r="6" fill="none" stroke="var(--gold-dk)" stroke-width="1.5" opacity=".6"/></svg><span id="coins">0</span></div>
     <div class="hearts" id="hearts" aria-label="Leben"></div>
+    <div class="timer" id="timer" hidden></div>
     <div class="progress" id="progress"></div>
     <button class="iconbtn" id="mute" aria-label="Ton an/aus">🔊</button>
   </div>
@@ -181,6 +188,8 @@ summary{cursor:pointer;font:600 16px var(--display)}
     <button class="go" id="start">Los geht's!</button>
     <button class="go shop" id="menuShop">Sticker-Shop</button>
     <p id="best"></p>
+    <div class="how" id="timeBox"></div>
+    <button class="go alt" id="openLog">Spielprotokoll ansehen</button>
     <details><summary>Wörterliste ansehen (41 Wörter)</summary><table class="vocab" id="vocab"></table></details>
   </div>
 
@@ -192,6 +201,7 @@ summary{cursor:pointer;font:600 16px var(--display)}
       <div class="stat"><b id="rCoins">0</b><span>Münzen</span></div>
       <div class="stat"><b id="rRight">0</b><span>richtig</span></div>
       <div class="stat"><b id="rBest">0</b><span>Rekord</span></div>
+      <div class="stat"><b id="rTime">0:00</b><span>Spielzeit</span></div>
     </div>
     <div class="group" id="missBox"><h2>Diese Wörter noch üben</h2><ul class="miss" id="missList"></ul></div>
     <p id="walletMsg"></p>
@@ -199,6 +209,15 @@ summary{cursor:pointer;font:600 16px var(--display)}
     <button class="go" id="retryMiss">Nur Fehler üben</button>
     <button class="go" id="again">Nochmal spielen</button>
     <button class="go alt" id="toMenu">Zum Menü</button>
+  </div>
+
+  <div class="overlay" id="log" hidden>
+    <div class="shophead"><button class="back" id="logBack">← Zurück</button></div>
+    <h1>Spiel<span>protokoll</span></h1>
+    <p>Hier steht, wann und wie lange auf diesem Gerät gespielt wurde. Gezählt wird nur die Zeit, in der das Spiel offen im Vordergrund ist.</p>
+    <div class="result" id="logSum"></div>
+    <div class="tablewrap"><table class="logt"><thead><tr><th>Datum</th><th>Uhrzeit</th><th>Dauer</th><th>Spielart</th><th>Richtig</th></tr></thead><tbody id="logBody"></tbody></table></div>
+    <p id="logEmpty">Noch keine Spiele gespielt.</p>
   </div>
 
   <div class="overlay" id="shop" hidden>
@@ -321,6 +340,36 @@ function wrap(text,maxW){
     if(lines.length<=3&&lines.every(l=>ctx.measureText(l).width<=maxW))return{fs,lines};
   }return{fs:11,lines:[text]};}
 
+// ---------- play time log ----------
+let LOG=[];try{LOG=JSON.parse(store.get('cc-log')||'[]');if(!Array.isArray(LOG))LOG=[]}catch(e){LOG=[]}
+const saveLog=()=>{LOG=LOG.slice(-300);store.set('cc-log',JSON.stringify(LOG))};
+const pad=n=>String(n).padStart(2,'0');
+const fmtDur=ms=>{const s=Math.round(ms/1000),h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return h?`${h}:${pad(m)}:${pad(x)}`:`${m}:${pad(x)}`};
+const fmtDate=t=>new Date(t).toLocaleDateString('de-AT',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'});
+const fmtTime=t=>new Date(t).toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'});
+let cur=null,lastTick=0,ticks=0;
+function tick(){if(!cur)return;const now=performance.now(),d=now-lastTick;lastTick=now;
+  if(document.visibilityState==='visible'&&d<5000)cur.ms+=d;$('timer').textContent='⏱ '+fmtDur(cur.ms);}
+function logUpdate(){if(!cur)return;cur.end=Date.now();cur.correct=S.correct;cur.coins=S.coins;saveLog();}
+function logStart(){cur={start:Date.now(),end:Date.now(),ms:0,play:S.play,words:S.deck.length,correct:0,coins:0,done:false};
+  LOG.push(cur);lastTick=performance.now();saveLog();$('timer').hidden=false;$('timer').textContent='⏱ 0:00';}
+function logEnd(){if(!cur)return 0;tick();cur.done=true;logUpdate();const ms=cur.ms;cur=null;$('timer').hidden=true;return ms;}
+setInterval(()=>{if(!cur)return;tick();if(++ticks%5===0)logUpdate()},1000);
+document.addEventListener('visibilitychange',()=>{tick();logUpdate()});
+addEventListener('pagehide',()=>logUpdate());
+function sums(){const d=new Date();d.setHours(0,0,0,0);const day=d.getTime(),wk=day-((d.getDay()+6)%7)*864e5;
+  let t=0,w=0,a=0;LOG.forEach(e=>{a+=e.ms;if(e.start>=wk)w+=e.ms;if(e.start>=day)t+=e.ms});return{t,w,a};}
+function renderTimeBox(){const s=sums();
+  $('timeBox').innerHTML=`<b>Spielzeit:</b> heute ${fmtDur(s.t)} · diese Woche ${fmtDur(s.w)} · insgesamt ${fmtDur(s.a)}`;}
+function renderLog(){const s=sums();
+  $('logSum').innerHTML=[['Heute',s.t],['Diese Woche',s.w],['Insgesamt',s.a]].map(([l,v])=>`<div class="stat"><b>${fmtDur(v)}</b><span>${l}</span></div>`).join('');
+  $('logBody').innerHTML=LOG.slice().reverse().map(e=>`<tr><td>${fmtDate(e.start)}</td><td>${fmtTime(e.start)}–${fmtTime(e.end)}</td><td>${fmtDur(e.ms)}</td>
+    <td>${e.play==='type'?'Schreiben':'Fangen'}</td><td>${e.correct}/${e.words}${e.done?'':' <span class="ab">abgebrochen</span>'}</td></tr>`).join('');
+  $('logEmpty').hidden=LOG.length>0;$('logBody').closest('.tablewrap').hidden=!LOG.length;}
+$('openLog').addEventListener('click',()=>{$('menu').hidden=true;$('log').hidden=false;$('log').scrollTop=0;renderLog()});
+$('logBack').addEventListener('click',()=>{$('log').hidden=true;$('menu').hidden=false;renderTimeBox()});
+renderTimeBox();
+
 // ---------- game flow ----------
 function startGame(deck){
   if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}
@@ -330,7 +379,7 @@ function startGame(deck){
   S.lane=1;S.px=W/2;S.speedMul=1;
   $('typer').hidden=S.play!=='type';document.querySelector('.controls').hidden=S.play==='type';
   document.querySelector('.app').classList.toggle('typing',S.play==='type');
-  $('menu').hidden=true;$('end').hidden=true;hud();newRound();}
+  $('menu').hidden=true;$('end').hidden=true;logStart();hud();newRound();}
 // ---------- writing mode ----------
 function variants(text){const out=[];
   text.split(/[;,]/).forEach(p=>{p=p.trim().replace(/\s*\((Einzahl|Mehrzahl)\)/,'');if(!p)return;
@@ -400,6 +449,7 @@ function resolve(){
 function next(){$('toast').hidden=true;S.idx++;
   if(S.hearts<=0||S.idx>=S.deck.length)return endGame();newRound();}
 function endGame(){S.state='end';S.round=null;$('answer').blur();
+  $('rTime').textContent=fmtDur(logEnd()||0);renderTimeBox();
   const total=S.idx>=S.deck.length?S.deck.length:S.idx+1, rate=S.correct/Math.max(1,S.deck.length);
   if(S.coins>S.best){S.best=S.coins;store.set('cc-best',S.best)}
   S.wallet+=S.coins;saveShop();showWallet();
@@ -432,7 +482,7 @@ seg('playSeg','play');seg('modeSeg','mode');seg('lenSeg','len',1);seg('spdSeg','
 $('start').addEventListener('click',()=>startGame(shuffle(WORDS).slice(0,S.len)));
 $('again').addEventListener('click',()=>startGame(shuffle(WORDS).slice(0,S.len)));
 $('retryMiss').addEventListener('click',()=>startGame(shuffle(S.mistakes)));
-$('toMenu').addEventListener('click',()=>{$('end').hidden=true;$('menu').hidden=false;S.state='menu'});
+$('toMenu').addEventListener('click',()=>{$('end').hidden=true;$('menu').hidden=false;S.state='menu';renderTimeBox()});
 $('vocab').innerHTML=WORDS.map(w=>`<tr><td>${w.en}</td><td>${w.de}</td></tr>`).join('');
 updateBest();
 
