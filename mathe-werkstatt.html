@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
+<title>Mathe-Werkstatt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Layout: workbook practice app — topic shelf menu, one task card at a time, each topic in its book chapter colour */
+:root{
+  --bg:#EEF1F3; --surface:#FFFFFF; --ink:#1B232B; --muted:#5B6873; --line:#D6DDE2;
+  --ok:#1E8A52; --bad:#C93C3C; --gold:#F3B708; --gold-dk:#A87700; --on-t:#FFFFFF;
+  --c-nat:#D9661A; --c-geo:#2B6CB8; --c-mas:#1C7F94; --c-bru:#D23B30; --c-kre:#A87C00; --c-dez:#237F7A; --c-mix:#5B4FB5;
+  --display:"Fredoka","Baloo 2","Trebuchet MS",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#10171C; --surface:#1A242B; --ink:#E7EEF2; --muted:#9AABB6; --line:#2C3A44;
+  --ok:#4FD08F; --bad:#F06A6A; --gold:#F6C22C; --gold-dk:#B98600; --on-t:#0E1418;
+  --c-nat:#F08A3E; --c-geo:#5C9BE6; --c-mas:#3FB0C6; --c-bru:#F06A5E; --c-kre:#E3B52C; --c-dez:#44B5AE; --c-mix:#9B8FF0; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#10171C; --surface:#1A242B; --ink:#E7EEF2; --muted:#9AABB6; --line:#2C3A44;
+  --ok:#4FD08F; --bad:#F06A6A; --gold:#F6C22C; --gold-dk:#B98600; --on-t:#0E1418;
+  --c-nat:#F08A3E; --c-geo:#5C9BE6; --c-mas:#3FB0C6; --c-bru:#F06A5E; --c-kre:#E3B52C; --c-dez:#44B5AE; --c-mix:#9B8FF0; color-scheme:dark}
+
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.app{max-width:680px;margin:0 auto;padding-block:16px 40px;--t:var(--c-mix);--tsoft:color-mix(in srgb,var(--t) 16%,var(--surface))}
+.screen{display:flex;flex-direction:column;gap:16px}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(36px,10vw,52px);line-height:1;margin:0;text-wrap:balance}
+h2{font-family:var(--display);font-weight:600;font-size:19px;margin:0}
+p{margin:0}
+.eyebrow{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--muted)}
+.muted{color:var(--muted)}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+
+.wallet{display:inline-flex;align-items:center;gap:8px;background:var(--surface);border-radius:999px;padding:8px 14px;font:700 19px var(--display);font-variant-numeric:tabular-nums;align-self:flex-start}
+.wallet small{font:500 14px var(--body);color:var(--muted)}
+.topics{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.topic{display:flex;gap:12px;align-items:center;text-align:left;border:2px solid transparent;background:var(--surface);border-radius:16px;padding:12px;transition:border-color .15s,transform .15s}
+.topic:hover{border-color:var(--t);transform:translateY(-2px)}
+.chip{flex:none;width:52px;height:52px;border-radius:14px;background:var(--t);color:var(--on-t);display:grid;place-items:center;font:700 18px var(--display)}
+.topic .txt b{display:block;font:600 17px var(--display)}
+.topic .txt span{display:block;font-size:13px;color:var(--muted);line-height:1.3}
+.seg{display:inline-grid;grid-template-columns:repeat(2,auto);gap:4px;background:var(--surface);padding:4px;border-radius:12px;align-self:flex-start}
+.seg button{border:0;background:transparent;padding:8px 16px;border-radius:9px;font:600 15px var(--display)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.box{background:var(--surface);border-radius:14px;padding:12px 14px;font-size:15px}
+.btn{border:0;border-radius:14px;padding:14px 18px;font:700 18px var(--display);background:var(--surface)}
+.btn.main{background:var(--t);color:var(--on-t)}
+.btn.gold{background:var(--gold);color:#3A2700}
+a.btn{text-decoration:none;text-align:center;color:inherit}
+
+/* play */
+.bar{display:flex;align-items:center;gap:10px;font:600 16px var(--display);font-variant-numeric:tabular-nums}
+.bar .coins{display:flex;align-items:center;gap:5px;font-size:20px}
+.bar .grow{flex:1}
+.ib{border:0;background:var(--surface);border-radius:10px;height:38px;min-width:38px;padding:0 10px;font:600 15px var(--display)}
+.steps{display:flex;gap:4px}
+.steps i{flex:1;height:6px;border-radius:3px;background:var(--line)}
+.steps i.ok{background:var(--ok)} .steps i.bad{background:var(--bad)} .steps i.now{background:var(--t)}
+.task{background:var(--surface);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.tag{align-self:flex-start;background:var(--tsoft);color:var(--ink);border-radius:999px;padding:3px 10px;font:600 13px var(--display);display:flex;gap:6px;align-items:center}
+.tag::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--t)}
+.q{font-weight:700;font-size:17px}
+.big{font:600 clamp(22px,6.4vw,30px) var(--display);line-height:1.35;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.big i{font-family:var(--body);font-style:italic}
+.fig{display:flex;justify-content:center}
+.fig svg{max-width:100%;height:auto;display:block}
+.fr{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;line-height:1.05;font-size:.82em;margin:0 .08em}
+.fr>span:first-child{border-bottom:2px solid currentColor;padding:0 .15em}
+.mx{white-space:nowrap}
+.hole{display:inline-block;min-width:1.3em;border:2px dashed var(--t);border-radius:6px;color:var(--t);text-align:center;line-height:1.1}
+table.dt{border-collapse:collapse;font:600 18px var(--display);font-variant-numeric:tabular-nums}
+table.dt td{border:1px solid var(--line);padding:6px 12px}
+table.dt td:first-child{color:var(--muted);font:600 15px var(--body)}
+
+form.ans{display:flex;flex-direction:column;gap:10px}
+.inrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.inrow .pre,.inrow .unit{font:600 22px var(--display)}
+.num{flex:1;min-width:0;max-width:260px;height:56px;border:3px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);font:600 24px var(--display);padding:0 14px;font-variant-numeric:tabular-nums}
+.num:focus{outline:none;border-color:var(--t)}
+.fracin{display:flex;align-items:center;gap:8px}
+.fracin .stack{display:flex;flex-direction:column;gap:6px;align-items:center}
+.fracin .stack hr{width:70px;border:0;border-top:3px solid var(--ink);margin:0}
+.fracin input{width:72px;height:50px;text-align:center;border:3px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);font:600 24px var(--display)}
+.fracin input:focus{outline:none;border-color:var(--t)}
+.fracin .w{width:62px;height:62px}
+.check{height:56px;border:0;border-radius:14px;background:var(--t);color:var(--on-t);font:700 18px var(--display);padding:0 22px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
+.opts button{border:3px solid var(--line);background:var(--surface);border-radius:14px;padding:12px;font:600 18px var(--display);min-height:56px}
+.opts button:hover:not(:disabled){border-color:var(--t)}
+.opts button.right{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,var(--surface))}
+.opts button.wrong{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 12%,var(--surface))}
+.opts.cmp{grid-template-columns:repeat(3,1fr)}
+.opts.cmp button{font-size:30px}
+.hint{color:var(--bad);font-weight:700;min-height:1.2em}
+.fb{border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.fb.ok{background:color-mix(in srgb,var(--ok) 14%,var(--surface))}
+.fb.bad{background:color-mix(in srgb,var(--bad) 12%,var(--surface))}
+.fb>b{font:700 20px var(--display)}
+.fb.ok>b{color:var(--ok)} .fb.bad>b{color:var(--bad)}
+.fb .sol{line-height:1.7}
+
+/* svg */
+.sv-shape{fill:var(--tsoft);stroke:var(--t);stroke-width:3;stroke-linejoin:round}
+.sv-edge{fill:none;stroke:var(--t);stroke-width:3}
+.sv-hid{fill:none;stroke:var(--t);stroke-width:2;stroke-dasharray:5 4}
+.sv-on{fill:var(--t);stroke:var(--ink);stroke-width:1.5}
+.sv-off{fill:var(--surface);stroke:var(--ink);stroke-width:1.5}
+.sv-c{fill:none;stroke:var(--ink);stroke-width:2}
+.sv-l{stroke:var(--ink);stroke-width:2;fill:none;stroke-linecap:round}
+.sv-hl{stroke:var(--t);stroke-width:4;fill:none;stroke-linecap:round}
+.sv-hlf{fill:var(--tsoft);stroke:var(--t);stroke-width:3}
+.sv-tf{fill:var(--t)}
+.sv-x{stroke:var(--bad);stroke-width:3;stroke-linecap:round}
+.sv-txt{fill:var(--ink);font:600 15px var(--display)}
+.sv-sm{fill:var(--muted);font:500 13px var(--body)}
+
+/* end + log */
+.stars{font-size:40px;letter-spacing:6px;color:var(--gold)} .stars .off{opacity:.2}
+.stats{display:flex;gap:10px;flex-wrap:wrap}
+.stat{flex:1 1 110px;background:var(--surface);border-radius:14px;padding:12px;text-align:center}
+.stat b{display:block;font:700 28px var(--display);font-variant-numeric:tabular-nums}
+.stat span{color:var(--muted);font-size:14px}
+.miss{margin:0;padding-left:20px;line-height:1.9}
+.tablewrap{min-width:0;overflow-x:auto;background:var(--surface);border-radius:14px}
+.logt{width:100%;border-collapse:collapse;font-size:15px;font-variant-numeric:tabular-nums}
+.logt th,.logt td{padding:8px 10px;text-align:left;white-space:nowrap;border-top:1px solid var(--line)}
+.logt th{border-top:0;font:600 14px var(--display);color:var(--muted)}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+  <section class="screen" id="menu">
+    <div class="eyebrow">Mathematik · 1. Klasse Mittelschule</div>
+    <h1>Mathe-Werkstatt</h1>
+    <div class="wallet"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" style="fill:var(--gold);stroke:var(--gold-dk)" stroke-width="2"/></svg><span class="walletN">0</span><small>Münzen gespart</small></div>
+    <p class="muted">Wähle ein Thema. Jede richtige Antwort bringt 1 Münze, jede 5. richtige Antwort hintereinander 1 Bonus-Münze. Bei einem Fehler siehst du den Rechenweg.</p>
+    <div class="topics" id="topics"></div>
+    <div class="row"><h2>Aufgaben pro Runde</h2>
+      <div class="seg" id="lenSeg"><button data-v="10" aria-pressed="true">10</button><button data-v="20">20</button></div></div>
+    <div class="box" id="timeBox"></div>
+    <div class="row">
+      <button class="btn" id="openLog">Spielprotokoll ansehen</button>
+      <a class="btn gold" id="shopLink" href="english-workshop.html#shop" hidden>Sticker-Shop</a>
+    </div>
+  </section>
+
+  <section class="screen" id="play" hidden>
+    <div class="bar">
+      <button class="ib" id="quit">✕ Beenden</button>
+      <div class="coins"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" style="fill:var(--gold);stroke:var(--gold-dk)" stroke-width="2"/></svg><span id="coins">0</span></div>
+      <div class="grow"></div>
+      <span id="timer" class="muted">⏱ 0:00</span>
+      <button class="ib" id="mute" aria-label="Ton an oder aus">🔊</button>
+    </div>
+    <div class="steps" id="steps"></div>
+    <div class="task">
+      <div class="tag" id="tag"></div>
+      <div class="q" id="q"></div>
+      <div class="big" id="big"></div>
+      <div class="fig" id="fig"></div>
+    </div>
+    <form class="ans" id="ans" autocomplete="off"></form>
+    <div class="fb" id="fb" hidden></div>
+    <button class="btn main" id="next" hidden>Weiter →</button>
+  </section>
+
+  <section class="screen" id="end" hidden>
+    <div class="eyebrow" id="endTopic"></div>
+    <h1 id="endTitle">Gut gemacht!</h1>
+    <div class="stars" id="stars"></div>
+    <div class="stats">
+      <div class="stat"><b id="rRight">0</b><span>richtig</span></div>
+      <div class="stat"><b id="rCoins">0</b><span>Münzen</span></div>
+      <div class="stat"><b id="rTime">0:00</b><span>Spielzeit</span></div>
+    </div>
+    <p id="walletMsg"></p>
+    <div id="missBox" class="screen" style="gap:8px"><h2>Diese Aufgaben noch üben</h2><ul class="miss" id="missList"></ul></div>
+    <button class="btn main" id="retryMiss">Fehler nochmal üben</button>
+    <button class="btn main" id="again">Neue Runde, gleiches Thema</button>
+    <a class="btn gold" id="endShop" href="english-workshop.html#shop" hidden>Sticker-Shop</a>
+    <button class="btn" id="toMenu">Zum Menü</button>
+  </section>
+
+  <section class="screen" id="log" hidden>
+    <div><button class="ib" id="logBack">← Zurück</button></div>
+    <h1>Spielprotokoll</h1>
+    <p class="muted">Hier steht, wann und wie lange auf diesem Gerät gerechnet wurde. Gezählt wird nur die Zeit, in der das Spiel offen im Vordergrund ist.</p>
+    <div class="stats" id="logSum"></div>
+    <div class="tablewrap" id="logWrap"><table class="logt"><thead><tr><th>Datum</th><th>Uhrzeit</th><th>Dauer</th><th>Thema</th><th>Richtig</th></tr></thead><tbody id="logBody"></tbody></table></div>
+    <p id="logEmpty" class="muted">Noch keine Runden gespielt.</p>
+  </section>
+</div>
+
+<script>
+// ================= helpers =================
+const $=id=>document.getElementById(id);
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+const R=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const P=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const gcd=(a,b)=>{a=Math.abs(a);b=Math.abs(b);while(b){[a,b]=[b,a%b]}return a};
+const lcm=(a,b)=>a/gcd(a,b)*b;
+const r6=x=>Math.round(x*1e6)/1e6;
+function fmt(x){const neg=x<0;x=r6(Math.abs(x));let [i,d]=String(x).split('.');if(i.length>4)i=i.replace(/\B(?=(\d{3})+(?!\d))/g,' ');return (neg?'−':'')+i+(d?','+d:'')}
+const fr=(n,d)=>`<span class="fr"><span>${n}</span><span>${d}</span></span>`;
+const mx=(w,n,d)=>`<span class="mx">${w}${fr(n,d)}</span>`;
+const hole='<span class="hole">?</span>';
+const f1=n=>n.toFixed(1);
+const lenTxt=mm=>mm%10===0?`${mm/10} cm`:mm<10?`${mm} mm`:`${Math.floor(mm/10)} cm ${mm%10} mm`;
+const scaleTxt=s=>`1 : ${fmt(s)}`;
+const sig1=x=>{const p=10**Math.floor(Math.log10(x));return r6(Math.round(x/p)*p)};
+
+// ================= Natürliche Zahlen =================
+const PL=[['E','Einer',1],['Z','Zehner',10],['H','Hunderter',100],['T','Tausender',1e3],['ZT','Zehntausender',1e4],['HT','Hunderttausender',1e5],['M','Millionen',1e6]];
+function natStellen(){const top=R(2,5);let v=0,parts=[];
+  for(let i=top;i>=0;i--){const d=i===top?R(1,9):(Math.random()<.3?0:R(1,9));if(d){parts.push(`${d} ${PL[i][0]}`);v+=d*PL[i][2]}}
+  if(parts.length>2&&Math.random()<.3)parts=shuffle(parts);
+  return{q:'Schreibe als Zahl an!',big:parts.join(' '),kind:'num',ans:v,sol:`${parts.join(' + ')} = <b>${fmt(v)}</b>`}}
+function natWert(){const L=R(4,7),p=R(0,L-1);const ds=[];
+  for(let i=L-1;i>=0;i--){if(i===p)ds.push(2);else{let d;do{d=R(i===L-1?1:0,9)}while(d===2);ds.push(d)}}
+  const n=+ds.join('');const cand=shuffle([0,1,2,3,4,5,6].filter(x=>x!==p&&x<=L)).slice(0,3);
+  return{q:'Welchen Stellenwert hat die Ziffer 2?',big:fmt(n),kind:'choice',opts:[p,...cand].map(i=>`${PL[i][1]} (${PL[i][0]})`),ans:0,
+    sol:`In ${fmt(n)} steht die 2 an der <b>${PL[p][1]}</b>-Stelle.`}}
+function natRunden(){const i=P([1,1,2,2,3,4]);const p=PL[i][2];const n=R(p*3,Math.min(p*1000,999999));
+  const dg=Math.floor(n/(p/10))%10;const a=Math.round(n/p)*p;
+  return{q:`Runde auf ${PL[i][1]}!`,big:`${fmt(n)} ≈ ?`,kind:'num',ans:a,
+    sol:`Entscheidend ist die ${PL[i-1][1]}-Ziffer <b>${dg}</b> → ${dg>=5?'aufrunden':'abrunden'}: ${fmt(n)} ≈ <b>${fmt(a)}</b>`}}
+function natVergl(){let A,B,va,vb;
+  if(Math.random()<.5){va=R(1000,99999);vb=va+P([-1,1])*R(1,9)*10**R(0,3);if(vb<1000)vb=va+R(1,9)*10**R(0,2);A=fmt(va);B=fmt(vb)}
+  else{const i=R(1,4),j=Math.max(0,i-R(1,2));const x=R(2,40);const y=Math.random()<.25?x*10**(i-j):R(2,400);
+    va=x*PL[i][2];vb=y*PL[j][2];A=`${x} ${PL[i][0]}`;B=`${y} ${PL[j][0]}`}
+  const s=va<vb?'<':va>vb?'>':'=';const e=s==='<'?'&lt;':s==='>'?'&gt;':'=';
+  return{q:'Setze &lt;, = oder &gt; ein!',big:`${A} ${hole} ${B}`,kind:'cmp',ans:s,sol:`${A} = ${fmt(va)} und ${B} = ${fmt(vb)} → <b>${A} ${e} ${B}</b>`}}
+function natZwischen(){const n=Math.random()<.3?R(1,99)*1000:R(1000,999999);
+  return{q:'Welche Zahl liegt dazwischen?',big:`${fmt(n-1)} &lt; ? &lt; ${fmt(n+1)}`,kind:'num',ans:n,sol:`Nachfolger von ${fmt(n-1)} ist <b>${fmt(n)}</b>.`}}
+function natUeber(){const plus=Math.random()<.5;let a=R(8000,19999),b=R(2000,7999);const c=plus?a+b:a-b;const o=[c];
+  while(o.length<4){const x=c+P([-1,1])*(R(15,35)*100+R(0,99));if(x>0&&o.every(y=>Math.abs(y-x)>800))o.push(x)}
+  const ra=Math.round(a/1000)*1000,rb=Math.round(b/1000)*1000;const op=plus?'+':'−';
+  return{q:'Finde nur mit Überschlag das richtige Ergebnis!',big:`${fmt(a)} ${op} ${fmt(b)} = ?`,kind:'choice',opts:o.map(fmt),ans:0,
+    sol:`Überschlag: ${fmt(ra)} ${op} ${fmt(rb)} = ${fmt(plus?ra+rb:ra-rb)} → am nächsten liegt <b>${fmt(c)}</b>`}}
+function natX(){const x=R(5,900);const f=R(0,3);let big,sol;
+  if(f===0){const a=R(10,999);big=`<i>x</i> + ${a} = ${fmt(x+a)}`;sol=`<i>x</i> = ${fmt(x+a)} − ${a} = <b>${x}</b>`}
+  else if(f===1){const s=x+R(10,999);big=`${fmt(s)} − <i>x</i> = ${s-x}`;sol=`<i>x</i> = ${fmt(s)} − ${s-x} = <b>${x}</b>`}
+  else if(f===2){const a=R(10,200),b=R(10,200);big=`${a} + <i>x</i> + ${b} = ${fmt(a+x+b)}`;sol=`<i>x</i> = ${fmt(a+x+b)} − ${a} − ${b} = <b>${x}</b>`}
+  else{const r=R(10,300),b=R(5,50),a=r+b+x;big=`${fmt(a)} − ${b} − <i>x</i> = ${r}`;sol=`<i>x</i> = ${fmt(a)} − ${b} − ${r} = <b>${x}</b>`}
+  return{q:'Welche Zahl musst du für <i>x</i> einsetzen?',big,kind:'num',ans:x,sol}}
+
+// ================= Geometrie =================
+const FEM=new Set(['Raute','Pyramide','Kugel','Gerade','Strecke','Sehne','Sekante','Tangente','Passante']);
+const art=w=>FEM.has(w)?'eine':'ein';
+const RIDDLES=[
+ ['Ich besitze einen Anfangspunkt und keinen Endpunkt.','Strahl','lin'],
+ ['Ich habe einen Anfangspunkt und einen Endpunkt. Meine Länge kann man messen.','Strecke','lin'],
+ ['Ich habe weder einen Anfangspunkt noch einen Endpunkt.','Gerade','lin'],
+ ['Ich werde mit Großbuchstaben beschriftet.','Punkt','lin'],
+ ['Eine Spitze, eine Kante und zwei Flächen begrenzen mich.','Kegel','kor'],
+ ['Mich umhüllen vier dreieckige Seitenflächen und eine quadratische Grundfläche. Ich habe 8 Kanten und 5 Eckpunkte.','Pyramide','kor'],
+ ['Ich habe 8 Ecken, 12 Kanten und sechs rechteckige Flächen.','Quader','kor'],
+ ['Ich habe sechs gleich große quadratische Flächen.','Würfel','kor'],
+ ['Ich habe zwei kreisförmige Flächen und eine gekrümmte Mantelfläche.','Zylinder','kor'],
+ ['Ich habe keine Ecken und keine Kanten, nur eine gekrümmte Fläche.','Kugel','kor'],
+ ['Ich habe vier gleich lange Seiten, die normal aufeinander stehen, und zwei gleich lange Diagonalen.','Quadrat','fl'],
+ ['Ich habe zwei normal aufeinander stehende Diagonalen und jeweils zwei Paar gleich lange angrenzende Seiten.','Deltoid','fl'],
+ ['Ich habe vier rechte Winkel. Meine gegenüberliegenden Seiten sind gleich lang, aber nicht alle vier.','Rechteck','fl'],
+ ['Ich habe vier gleich lange Seiten, aber keine rechten Winkel.','Raute','fl'],
+ ['Ich habe genau ein Paar parallele Seiten.','Trapez','fl'],
+ ['Meine gegenüberliegenden Seiten sind parallel und gleich lang. Rechte Winkel habe ich keine.','Parallelogramm','fl'],
+ ['Ich habe drei Ecken und drei Seiten.','Dreieck','fl']];
+function geoRaetsel(){const [t,a,g]=P(RIDDLES);const others=shuffle(RIDDLES.filter(r=>r[2]===g&&r[1]!==a).map(r=>r[1])).slice(0,3);
+  return{q:'Wer bin ich?',big:`<span style="font-size:.72em">„${t}“</span>`,kind:'choice',opts:[a,...others],ans:0,sol:`Ich bin ${art(a)} <b>${a}</b>.`}}
+const SH={fl:{
+  Dreieck:'<polygon class="sv-shape" points="55,105 145,105 100,18"/>',
+  Quadrat:'<rect class="sv-shape" x="55" y="15" width="90" height="90"/>',
+  Rechteck:'<rect class="sv-shape" x="25" y="28" width="150" height="66"/>',
+  Trapez:'<polygon class="sv-shape" points="30,100 170,100 135,25 70,25"/>',
+  Parallelogramm:'<polygon class="sv-shape" points="20,100 135,100 180,25 65,25"/>',
+  Deltoid:'<polygon class="sv-shape" points="100,8 140,42 100,112 60,42"/>',
+  Raute:'<polygon class="sv-shape" points="100,8 132,60 100,112 68,60"/>',
+  Kreis:'<circle class="sv-shape" cx="100" cy="60" r="48"/>'},
+ kor:{
+  Würfel:'<rect class="sv-shape" x="55" y="45" width="60" height="60"/><polygon class="sv-shape" points="55,45 80,25 140,25 115,45"/><polygon class="sv-shape" points="115,45 140,25 140,85 115,105"/><path class="sv-hid" d="M80,25V85M80,85L55,105M80,85H140"/>',
+  Quader:'<rect class="sv-shape" x="30" y="58" width="105" height="48"/><polygon class="sv-shape" points="30,58 62,32 167,32 135,58"/><polygon class="sv-shape" points="135,58 167,32 167,80 135,106"/><path class="sv-hid" d="M62,32V80M62,80L30,106M62,80H167"/>',
+  Pyramide:'<polygon class="sv-shape" points="100,12 40,104 130,104"/><polygon class="sv-shape" points="100,12 130,104 165,80"/><path class="sv-hid" d="M40,104L75,80H165M75,80L100,12"/>',
+  Kegel:'<path class="sv-shape" d="M50,95 L100,12 L150,95 A50,13 0 0 1 50,95 Z"/><path class="sv-hid" d="M50,95 A50,13 0 0 1 150,95"/>',
+  Zylinder:'<path class="sv-shape" d="M55,25 V95 A45,12 0 0 0 145,95 V25 Z"/><ellipse class="sv-shape" cx="100" cy="25" rx="45" ry="12"/><path class="sv-hid" d="M55,95 A45,12 0 0 1 145,95"/>',
+  Kugel:'<circle class="sv-shape" cx="100" cy="60" r="48"/><path class="sv-edge" d="M52,60 A48,13 0 0 0 148,60"/><path class="sv-hid" d="M52,60 A48,13 0 0 1 148,60"/>'}};
+function geoName(){const g=Math.random()<.55?'fl':'kor';const names=Object.keys(SH[g]);const a=P(names);
+  return{q:g==='fl'?'Wie heißt diese Fläche?':'Wie heißt dieser Körper?',fig:`<svg viewBox="0 0 200 120" width="240">${SH[g][a]}</svg>`,kind:'choice',
+    opts:[a,...shuffle(names.filter(x=>x!==a)).slice(0,3)],ans:0,sol:`Das ist ${art(a)} <b>${a}</b>.`}}
+const ITEMS=[['Gartenzaun','Strecke'],['Licht einer Taschenlampe','Strahl'],['Maßband','Strecke'],['Geschenkband','Strecke'],['Sonnenstrahl','Strahl'],
+ ['Laserstrahl','Strahl'],['Tischkante','Strecke'],['Bleistift','Strecke'],['Licht eines Leuchtturms','Strahl'],['Lineal','Strecke'],['Wasser aus einer Quelle','Strahl']];
+function geoStrahl(){const [t,a]=P(ITEMS);
+  return{q:'Strecke oder Strahl?',big:t,kind:'choice',opts:['Strecke','Strahl'],keep:true,ans:a==='Strecke'?0:1,
+    sol:a==='Strecke'?`<b>Strecke</b>: Ein ${t} hat einen Anfang und ein Ende.`:`<b>Strahl</b>: Es beginnt an einem Punkt und geht immer weiter.`}}
+function lineSvg(cx,cy,ang,cls,label){const dx=Math.cos(ang),dy=Math.sin(ang);let s=`<line class="${cls}" x1="${f1(cx-dx*300)}" y1="${f1(cy-dy*300)}" x2="${f1(cx+dx*300)}" y2="${f1(cy+dy*300)}"/>`;
+  for(let t=110;t>0;t-=5){for(const sg of [1,-1]){const x=cx+sg*dx*t+(-dy)*13,y=cy+sg*dy*t+dx*13;if(x>10&&x<230&&y>16&&y<136)return s+`<text class="sv-txt" x="${f1(x)}" y="${f1(y)}" text-anchor="middle">${label}</text>`}}return s}
+function geoLage(){const type=P(['par','nor','none']);const a=Math.random()*Math.PI;let b,c2;const cx=120,cy=72;let g,h;
+  if(type==='par'){const nx=-Math.sin(a),ny=Math.cos(a),o=R(20,30);g=lineSvg(cx-nx*o,cy-ny*o,a,'sv-l','g');h=lineSvg(cx+nx*o,cy+ny*o,a,'sv-hl','h')}
+  else{const d=type==='nor'?Math.PI/2:(R(25,60)*Math.PI/180)*P([1,-1]);const s=R(-25,25);g=lineSvg(cx,cy,a,'sv-l','g');h=lineSvg(cx+Math.cos(a)*s,cy+Math.sin(a)*s,a+d,'sv-hl','h')}
+  const opts=['parallel (g ∥ h)','normal (g ⊥ h)','weder noch'];const ans={par:0,nor:1,none:2}[type];
+  return{q:'Wie liegen die Geraden g und h zueinander?',fig:`<svg viewBox="0 0 240 144" width="300">${g}${h}</svg>`,kind:'choice',opts,keep:true,ans,
+    sol:['<b>Parallel</b>: g und h haben überall den gleichen Abstand und schneiden sich nie.','<b>Normal</b>: g und h schneiden sich im rechten Winkel (90°).','<b>Weder noch</b>: g und h schneiden sich, aber nicht im rechten Winkel.'][ans]}}
+const GZ=[['Wie viele Diagonalen hat ein Rechteck?',2],['Wie viele Diagonalen hat ein Dreieck?',0],['Wie viele Diagonalen hat ein Fünfeck?',5],['Wie viele Diagonalen hat ein Sechseck?',9],
+ ['Wie viele Ecken hat ein Würfel?',8],['Wie viele Kanten hat ein Würfel?',12],['Wie viele Flächen hat ein Quader?',6],['Wie viele Kanten hat ein Quader?',12],
+ ['Wie viele Ecken hat eine Pyramide mit quadratischer Grundfläche?',5],['Wie viele Kanten hat eine Pyramide mit quadratischer Grundfläche?',8],
+ ['Wie viele Flächen hat ein Zylinder?',3],['Wie viele Ecken hat ein Trapez?',4]];
+function geoZahl(){const [t,a]=P(GZ);return{q:'Zähle!',big:`<span style="font-size:.75em">${t}</span>`,kind:'num',ans:a,sol:`Richtig ist <b>${a}</b>.`}}
+
+// ================= Maßstab =================
+function masWirk(){const sc=P([10,20,25,40,50,100,200,250,500,1000,2000,5000,10000,25000,50000,100000]);const pm=R(8,120);const rMM=pm*sc;
+  const [unit,div]=rMM<10000?['cm',10]:rMM<1e6?['m',1000]:['km',1e6];const ans=r6(rMM/div);
+  const step=`${fmt(pm/10)} cm · ${fmt(sc)} = ${fmt(rMM/10)} cm`;
+  return{q:`Maßstab ${scaleTxt(sc)}. Wie lang ist die Strecke in Wirklichkeit?`,big:`am Plan: ${lenTxt(pm)}`,kind:'num',unit,ans,
+    sol:unit==='cm'?`${fmt(pm/10)} cm · ${fmt(sc)} = <b>${fmt(ans)} cm</b>`:`${step} = <b>${fmt(ans)} ${unit}</b>`}}
+function realTxt(cm){return cm>=100000?`${fmt(cm/100000)} km`:cm>=1000?`${fmt(cm/100)} m`:`${fmt(cm)} cm`}
+function masPlan(){const sc=P([10,20,50,100,200,500,1000,10000]);const pmm=R(4,30)*5;const cm=pmm*sc/10;
+  return{q:`Wie lang ist die Strecke am Plan im Maßstab ${scaleTxt(sc)}?`,big:`in Wirklichkeit: ${realTxt(cm)}`,kind:'num',unit:'cm',ans:pmm/10,
+    sol:`${realTxt(cm)} = ${fmt(cm)} cm → ${fmt(cm)} cm : ${fmt(sc)} = <b>${fmt(pmm/10)} cm</b>`}}
+function masBest(){const pc=P([1,2,4,5,10]);const sc=P([100,200,500,1000,2000,5000,10000,20000,25000,50000,100000]);const cm=pc*sc;
+  return{q:'Bestimme den Maßstab!',big:`${realTxt(cm)} in Wirklichkeit sind am Plan ${pc} cm.`,kind:'num',pre:'1 :',ans:sc,
+    sol:`${realTxt(cm)} = ${fmt(cm)} cm → ${fmt(cm)} : ${pc} = ${fmt(sc)} → Maßstab <b>${scaleTxt(sc)}</b>`}}
+function masLeiste(){const k=P([1,2,5,10,25,50]);const sc=k*100000;
+  let s='<line class="sv-l" x1="20" y1="38" x2="230" y2="38"/>';
+  for(let i=0;i<4;i++)if(i%2===0)s+=`<line class="sv-x" x1="${25+i*50}" y1="38" x2="${75+i*50}" y2="38"/>`;
+  for(let i=0;i<=4;i++){const x=25+i*50;s+=`<line class="sv-l" x1="${x}" y1="31" x2="${x}" y2="45"/><text class="sv-txt" x="${x}" y="22" text-anchor="middle">${i?i*k+' km':'0'}</text><text class="sv-sm" x="${x}" y="62" text-anchor="middle">${i?i+' cm':'0'}</text>`}
+  const o=[sc,sc*10,sc/10,sc*4];
+  return{q:'Welcher Maßstab passt zu dieser Maßstabsleiste?',fig:`<svg viewBox="0 0 250 72" width="320">${s}</svg>`,kind:'choice',opts:o.map(scaleTxt),ans:0,
+    sol:`1 cm ≙ ${k} km = ${fmt(sc)} cm → <b>${scaleTxt(sc)}</b>`}}
+function masKm(){const X=P([100000,200000,250000,500000,1000000,2500000]);const c=R(1,6);const ans=r6(X/100000*c);
+  return{q:`Landkarte im Maßstab ${scaleTxt(X)}. Wie viele Kilometer sind ${c} cm auf der Karte?`,big:`${c} cm ≙ ? km`,kind:'num',unit:'km',ans,
+    sol:`1 cm ≙ ${fmt(X)} cm = ${fmt(X/100000)} km (5 Nullen wegstreichen, denn 1 km = 100 000 cm). ${c} cm ≙ <b>${fmt(ans)} km</b>`}}
+
+// ================= Brüche =================
+function fracFig(d,n){
+  if(Math.random()<.5){const st=R(0,d-1);let s='';const cx=60,cy=60,r=54;
+    for(let i=0;i<d;i++){const a0=-Math.PI/2+2*Math.PI*i/d,a1=a0+2*Math.PI/d;const on=((i-st+d)%d)<n;
+      s+=`<path class="${on?'sv-on':'sv-off'}" d="M${cx},${cy} L${f1(cx+r*Math.cos(a0))},${f1(cy+r*Math.sin(a0))} A${r},${r} 0 0 1 ${f1(cx+r*Math.cos(a1))},${f1(cy+r*Math.sin(a1))} Z"/>`}
+    return`<svg viewBox="0 0 120 120" width="170">${s}</svg>`}
+  const L={2:[2,1],3:[3,1],4:P([[2,2],[4,1]]),5:[5,1],6:[3,2],8:[4,2],10:[5,2],12:[4,3]}[d];const cs=34;const on=new Set(shuffle([...Array(d).keys()]).slice(0,n));let s='';
+  for(let i=0;i<d;i++){const x=2+(i%L[0])*cs,y=2+Math.floor(i/L[0])*cs;s+=`<rect class="${on.has(i)?'sv-on':'sv-off'}" x="${x}" y="${y}" width="${cs}" height="${cs}"/>`}
+  return`<svg viewBox="0 0 ${L[0]*cs+4} ${L[1]*cs+4}" width="${Math.min(260,(L[0]*cs+4)*1.3)}">${s}</svg>`}
+function red(n,d){const g=gcd(n,d);return g>1?` = ${fr(n/g,d/g)}`:''}
+function bruAblesen(){const d=P([2,3,4,5,6,8,10,12]);const n=R(1,d-1);
+  return{q:'Welcher Bruchteil ist gefärbt?',fig:fracFig(d,n),kind:'frac',form:'any',ans:{n,d},sol:`${n} von ${d} gleich großen Teilen sind gefärbt: <b>${fr(n,d)}</b>${red(n,d)}`}}
+function bruGem(){const d=R(2,9),w=R(1,6),r=R(1,d-1),n=w*d+r;
+  return{q:'Schreibe als gemischte Zahl!',big:`${fr(n,d)} = ?`,kind:'frac',form:'mixed',ans:{n,d},sol:`${n} : ${d} = ${w} Rest ${r} → <b>${mx(w,r,d)}</b>`}}
+function bruUnecht(){const d=R(2,9),w=R(1,9),r=R(1,d-1),n=w*d+r;
+  return{q:'Verwandle in einen unechten Bruch!',big:`${mx(w,r,d)} = ?`,kind:'frac',form:'improper',ans:{n,d},sol:`${w} · ${d} + ${r} = ${n} → <b>${fr(n,d)}</b>`}}
+function bruKuerzen(){let a,b,k;
+  if(Math.random()<.25){[a,b]=P([[4,10],[8,10],[25,100],[12,100],[5,100],[50,1000],[125,1000],[40,1000],[250,1000],[75,100]]);const g=gcd(a,b);k=g;a/=g;b/=g}
+  else{do{b=R(2,12);a=R(1,b-1)}while(gcd(a,b)!==1);k=R(2,Math.max(2,Math.floor(100/b)))}
+  return{q:'Kürze so weit wie möglich!',big:`${fr(a*k,b*k)} = ?`,kind:'frac',form:'reduced',ans:{n:a,d:b},sol:`Zähler und Nenner durch ${k}: <b>${fr(a,b)}</b>`}}
+function bruErw(){let a,b;do{b=R(2,10);a=R(1,b-1)}while(gcd(a,b)!==1);const k=R(2,6);const top=Math.random()<.6;
+  return{q:'Ergänze die fehlende Zahl!',big:`${fr(a,b)} = ${top?fr(hole,b*k):fr(a*k,hole)}`,kind:'num',ans:top?a*k:b*k,
+    sol:`Erweitert mit ${k}: ${fr(a,b)} = <b>${fr(a*k,b*k)}</b>`}}
+function bruVergl(){const b=R(2,10),a=R(1,b+2);let c,d;
+  if(Math.random()<.25){const k=R(2,4);c=a*k;d=b*k}else{do{d=R(2,10);c=R(1,d+2)}while(c*b===a*d&&gcd(c,d)===1&&gcd(a,b)===1)}
+  const L=lcm(b,d);const x=a*L/b,y=c*L/d;const s=x<y?'<':x>y?'>':'=';const e=s==='<'?'&lt;':s==='>'?'&gt;':'=';
+  return{q:'Setze &lt;, = oder &gt; ein!',big:`${fr(a,b)} ${hole} ${fr(c,d)}`,kind:'cmp',ans:s,
+    sol:`Gleicher Nenner: ${fr(a,b)} = ${fr(x,L)} und ${fr(c,d)} = ${fr(y,L)} → <b>${fr(a,b)} ${e} ${fr(c,d)}</b>`}}
+function bruVon(){const t=R(0,2);
+  if(t===1){const b=P([2,4,5,8,10]);const a=R(1,b-1);const ans=1000*a/b;return{q:'Gib den Bruchteil in Gramm an!',big:`${fr(a,b)} kg = ? g`,kind:'num',unit:'g',ans,sol:`1 kg = 1000 g → 1000 : ${b} · ${a} = <b>${fmt(ans)} g</b>`}}
+  if(t===2){const b=P([2,3,4,5,6,10,12]);const a=R(1,b-1);const ans=60*a/b;return{q:'Gib den Bruchteil in Minuten an!',big:`${fr(a,b)} h = ? min`,kind:'num',unit:'min',ans,sol:`1 h = 60 min → 60 : ${b} · ${a} = <b>${ans} min</b>`}}
+  const b=R(2,13),a=R(1,b-1),tot=b*R(3,60),ans=tot/b*a;
+  return{q:'Berechne den Bruchteil!',big:`${fr(a,b)} von ${fmt(tot)} = ?`,kind:'num',ans,sol:`${fmt(tot)} : ${b} = ${fmt(tot/b)} → ${fmt(tot/b)} · ${a} = <b>${fmt(ans)}</b>`}}
+function bruGanz(){const b=R(2,15),a=R(1,b-1),whole=b*R(3,40),v=whole/b*a;
+  return{q:'Berechne das Ganze!',big:`${fr(a,b)} sind ${fmt(v)}`,kind:'num',ans:whole,sol:`${fmt(v)} : ${a} = ${fmt(v/a)} (das ist ${fr(1,b)}) → ${fmt(v/a)} · ${b} = <b>${fmt(whole)}</b>`}}
+function bruArt(){const t=R(0,2);let big,d,n,w;
+  if(t===0){d=R(2,12);n=R(1,d-1);big=fr(n,d)}else if(t===1){d=R(2,9);do{n=R(d+1,d*5)}while(n%d===0);big=fr(n,d)}else{d=R(2,9);n=R(1,d-1);w=R(1,9);big=mx(w,n,d)}
+  return{q:'Was für ein Bruch ist das?',big,kind:'choice',opts:['echter Bruch','unechter Bruch','gemischte Zahl'],keep:true,ans:t,
+    sol:['<b>Echter Bruch</b>: Der Zähler ist kleiner als der Nenner, der Bruch ist kleiner als 1.','<b>Unechter Bruch</b>: Der Zähler ist größer als der Nenner, der Bruch ist größer als 1.','<b>Gemischte Zahl</b>: eine ganze Zahl und ein echter Bruch.'][t]}}
+function bruStrahl(){const max=P([1,1,2]),d=P([2,3,4,5,6,8,10]);let k;do{k=R(1,max*d-1)}while(k%d===0);
+  const x0=20,len=250,n=max*d;let s=`<line class="sv-l" x1="${x0}" y1="40" x2="${x0+len+18}" y2="40"/><path class="sv-l" d="M${x0+len+10},34 L${x0+len+18},40 L${x0+len+10},46"/>`;
+  for(let i=0;i<=n;i++){const x=x0+i*len/n,big=i%d===0;s+=`<line class="sv-l" x1="${f1(x)}" y1="${big?30:34}" x2="${f1(x)}" y2="${big?50:46}"/>`;if(big)s+=`<text class="sv-txt" x="${f1(x)}" y="68" text-anchor="middle">${i/d}</text>`}
+  const xm=x0+k*len/n;s+=`<path class="sv-x" d="M${f1(xm-6)},${34-12} l12,12 M${f1(xm+6)},${34-12} l-12,12"/>`;
+  return{q:'Welcher Bruch ist markiert?',fig:`<svg viewBox="0 0 300 76" width="340">${s}</svg>`,kind:'frac',form:'any',whole:max>1,ans:{n:k,d},
+    sol:`Die Einheit ist in ${d} gleiche Teile geteilt. Das Kreuz ist beim ${k}. Teilstrich: <b>${fr(k,d)}</b>${k>d?` = ${mx(Math.floor(k/d),k%d,d)}`:''}${red(k,d)}`}}
+function bruRest(){const b=R(2,20),a=R(1,b-1);
+  return{q:'Welcher Bruchteil fehlt auf ein Ganzes?',big:`${fr(a,b)} + ? = 1`,kind:'frac',form:'any',ans:{n:b-a,d:b},sol:`1 = ${fr(b,b)} → ${fr(b,b)} − ${fr(a,b)} = <b>${fr(b-a,b)}</b>`}}
+
+// ================= Kreis =================
+function kreRD(){const r=R(12,60),d=2*r;
+  if(Math.random()<.5)return{q:'Wie groß ist der Radius?',big:`d = ${lenTxt(d)}`,kind:'num',pre:'r =',unit:'mm',ans:r,sol:`r = d : 2 = ${d} mm : 2 = <b>${r} mm</b>`};
+  return{q:'Wie groß ist der Durchmesser?',big:`r = ${lenTxt(r)}`,kind:'num',pre:'d =',unit:'mm',ans:d,sol:`d = 2 · r = 2 · ${r} mm = <b>${d} mm</b>`}}
+const KDEF={Mittelpunkt:'Der Mittelpunkt ist von allen Punkten der Kreislinie gleich weit entfernt.',Radius:'Der Radius verbindet den Mittelpunkt mit der Kreislinie.',
+ Durchmesser:'Der Durchmesser geht durch den Mittelpunkt von Rand zu Rand. d = 2 · r',Sehne:'Eine Sehne ist eine Strecke zwischen zwei Punkten der Kreislinie.',
+ Sekante:'Eine Sekante ist eine Gerade, die den Kreis in zwei Punkten schneidet.',Tangente:'Eine Tangente berührt den Kreis in genau einem Punkt.',
+ Passante:'Eine Passante geht am Kreis vorbei, ohne ihn zu berühren.',Kreissektor:'Ein Kreissektor wird von zwei Radien und einem Kreisbogen begrenzt – wie ein Tortenstück.',
+ Kreissegment:'Ein Kreissegment wird von einer Sehne und einem Kreisbogen begrenzt.'};
+function kreTeile(){const cx=110,cy=80,r=55;const names=Object.keys(KDEF);const a=P(names);const ang=Math.random()*Math.PI*2;
+  const pt=t=>[cx+r*Math.cos(t),cy+r*Math.sin(t)];const L=(p,q,c='sv-hl')=>`<line class="${c}" x1="${f1(p[0])}" y1="${f1(p[1])}" x2="${f1(q[0])}" y2="${f1(q[1])}"/>`;let el='';
+  const p1=pt(ang);
+  if(a==='Mittelpunkt')el=`<circle class="sv-tf" cx="${cx}" cy="${cy}" r="6"/>`;
+  else if(a==='Radius')el=L([cx,cy],p1);
+  else if(a==='Durchmesser')el=L(pt(ang+Math.PI),p1);
+  else if(a==='Sehne'||a==='Sekante'){const p2=pt(ang+R(70,130)*Math.PI/180);if(a==='Sehne')el=L(p1,p2);else{const vx=p2[0]-p1[0],vy=p2[1]-p1[1],l=Math.hypot(vx,vy),e=38;el=L([p1[0]-vx/l*e,p1[1]-vy/l*e],[p2[0]+vx/l*e,p2[1]+vy/l*e])}}
+  else if(a==='Tangente'||a==='Passante'){const dist=a==='Tangente'?r:r+16;const c=[cx+dist*Math.cos(ang),cy+dist*Math.sin(ang)];const tx=-Math.sin(ang),ty=Math.cos(ang),h=58;el=L([c[0]-tx*h,c[1]-ty*h],[c[0]+tx*h,c[1]+ty*h])}
+  else{const p2=pt(ang+R(70,120)*Math.PI/180);el=a==='Kreissektor'?`<path class="sv-hlf" d="M${cx},${cy} L${f1(p1[0])},${f1(p1[1])} A${r},${r} 0 0 1 ${f1(p2[0])},${f1(p2[1])} Z"/>`:`<path class="sv-hlf" d="M${f1(p1[0])},${f1(p1[1])} A${r},${r} 0 0 1 ${f1(p2[0])},${f1(p2[1])} Z"/>`}
+  const cross=a==='Mittelpunkt'?'':`<path class="sv-l" d="M${cx-4},${cy-4} l8,8 M${cx+4},${cy-4} l-8,8"/>`;
+  return{q:'Wie heißt das farbig markierte Kreisteil?',fig:`<svg viewBox="0 -10 220 180" width="260"><circle class="sv-c" cx="${cx}" cy="${cy}" r="${r}"/>${el}${cross}</svg>`,kind:'choice',
+    opts:[a,...shuffle(names.filter(x=>x!==a)).slice(0,3)],ans:0,sol:`<b>${a}</b>: ${KDEF[a]}`}}
+const KWF=[['Der Kreis hat einen Mittelpunkt.',1],['Der Radius ist eine Gerade – also ohne Anfangs- und Endpunkt.',0],['Ein Kreissektor schaut wie ein Tortenstück aus.',1],
+ ['Der Radius ist die Hälfte des Durchmessers.',1],['Eine Tangente schneidet den Kreis in zwei Punkten.',0],['Eine Passante berührt den Kreis nicht.',1],
+ ['Der Durchmesser ist die längste Sehne im Kreis.',1],['Eine Sekante berührt den Kreis in genau einem Punkt.',0],['Alle Punkte der Kreislinie sind gleich weit vom Mittelpunkt entfernt.',1],
+ ['Der Durchmesser ist halb so lang wie der Radius.',0],['Konzentrische Kreise haben denselben Mittelpunkt.',1],['Die Tangente steht im Berührpunkt normal auf den Radius.',1],
+ ['Ein Kreissegment wird von zwei Radien begrenzt.',0]];
+function kreWF(){const [t,w]=P(KWF);return{q:'Wahr oder falsch?',big:`<span style="font-size:.72em">${t}</span>`,kind:'choice',opts:['wahr','falsch'],keep:true,ans:w?0:1,
+  sol:w?'Die Aussage ist <b>wahr</b>.':'Die Aussage ist <b>falsch</b>.'}}
+function kreSechs(){const r=R(25,50);return{q:'Ein regelmäßiges Sechseck wird in einen Kreis konstruiert. Wie lang ist eine Seite des Sechsecks?',big:`r = ${lenTxt(r)}`,kind:'num',unit:'mm',ans:r,
+  sol:`Im Sechseck ist jede Seite genau so lang wie der Radius: <b>${r} mm</b>`}}
+
+// ================= Dezimalzahlen dividieren =================
+function dezKomma(){const q=R(2,12),k=R(2,9),m=P([1,1,2]);const s=10**m;const a=q*k/s,b=k/s;
+  return{q:'Verschiebe das Komma und rechne im Kopf!',big:`${fmt(a)} : ${fmt(b)} = ?`,kind:'num',ans:q,sol:`Bei beiden Zahlen das Komma um ${m} Stelle${m>1?'n':''} nach rechts: ${q*k} : ${k} = <b>${q}</b>`}}
+function divNums(){let B;do{B=R(2,25)}while(B%10===0);let Q;do{Q=R(105,2499)}while(Q%10===0);return{a:Q*B/1000,b:B/10,q:Q/100,B,Q}}
+function dezDiv(){if(Math.random()<.4){const b=R(2,9),Q=R(101,4999),a=Q*b/100;return{q:'Löse die Division!',big:`${fmt(a)} : ${b} = ?`,kind:'num',ans:Q/100,sol:`${fmt(a)} : ${b} = <b>${fmt(Q/100)}</b>`}}
+  const {a,b,q,B,Q}=divNums();return{q:'Löse die Division!',big:`${fmt(a)} : ${fmt(b)} = ?`,kind:'num',ans:q,sol:`Komma um 1 Stelle nach rechts: ${fmt(Q*B/100)} : ${B} = <b>${fmt(q)}</b>`}}
+function dezUeber(){const {a,b,q}=divNums();const o=[q,r6(q*10),r6(q/10),r6(q*100)];
+  return{q:'Finde mit Überschlag das richtige Ergebnis!',big:`${fmt(a)} : ${fmt(b)} = ?`,kind:'choice',opts:o.map(fmt),ans:0,
+    sol:`Überschlag: ${fmt(sig1(a))} : ${fmt(sig1(b))} ≈ ${fmt(r6(sig1(a)/sig1(b)))} → <b>${fmt(q)}</b>`}}
+function dezRunden(){let a,b,x;do{a=R(100,9999)/100;b=P([0.3,0.7,1.3,1.7,0.6,0.9,1.1,0.13,0.26,0.047]);x=a/b}while(Math.abs(x*100-Math.floor(x*100)-.5)<1e-4);
+  const ans=Math.round(x*100)/100;const tr=(Math.floor(x*1000)/1000).toFixed(3).replace('.',',');
+  return{q:'Runde das Ergebnis auf Hundertstel!',big:`${fmt(a)} : ${fmt(b)} ≈ ?`,kind:'num',ans,sol:`${fmt(a)} : ${fmt(b)} = ${tr}… → Tausendstel ${tr.slice(-1)} → ${+tr.slice(-1)>=5?'aufrunden':'abrunden'}: <b>${fmt(ans)}</b>`}}
+function dezFehlt(){const {a,b,q}=divNums();const t=R(0,2);const rows=[['Dividend',a],['Divisor',b],['Quotient',q]];
+  const tbl=`<table class="dt">${rows.map((r,i)=>`<tr><td>${r[0]}</td><td>${i===t?hole:fmt(r[1])}</td></tr>`).join('')}</table>`;
+  const sol=t===0?`Dividend = Quotient · Divisor = ${fmt(q)} · ${fmt(b)} = <b>${fmt(a)}</b>`:t===1?`Divisor = Dividend : Quotient = ${fmt(a)} : ${fmt(q)} = <b>${fmt(b)}</b>`:`Quotient = ${fmt(a)} : ${fmt(b)} = <b>${fmt(q)}</b>`;
+  return{q:'Berechne den fehlenden Teil der Division!',big:tbl,kind:'num',ans:rows[t][1],sol}}
+
+// ================= Themen =================
+const TOPICS={
+  nat:{name:'Natürliche Zahlen',chip:'123',sub:'Stellenwert, Runden, Vergleichen, Überschlag',pages:'Buch S. 16–20',gens:[natStellen,natWert,natRunden,natVergl,natZwischen,natUeber,natX]},
+  geo:{name:'Geometrie',chip:'△',sub:'Strecke, Strahl, Gerade, Flächen, Körper, parallel und normal',pages:'Buch S. 48–51',gens:[geoRaetsel,geoName,geoStrahl,geoLage,geoZahl]},
+  mas:{name:'Maßstab',chip:'1:10',sub:'Plan und Wirklichkeit, Maßstabsleiste',pages:'Buch S. 47 und 51',gens:[masWirk,masPlan,masBest,masLeiste,masKm]},
+  bru:{name:'Brüche',chip:'¾',sub:'Ablesen, Kürzen, Erweitern, Vergleichen, Bruchteile',pages:'Buch S. 52–63',gens:[bruAblesen,bruGem,bruUnecht,bruKuerzen,bruErw,bruVergl,bruVon,bruGanz,bruArt,bruStrahl,bruRest]},
+  kre:{name:'Kreis',chip:'◯',sub:'Radius, Durchmesser, Sehne, Tangente',pages:'Buch S. 64–65',gens:[kreRD,kreTeile,kreWF,kreSechs]},
+  dez:{name:'Dezimalzahlen dividieren',chip:'0,5',sub:'Komma verschieben, Überschlag, Runden',pages:'Buch S. 87–89',gens:[dezKomma,dezDiv,dezUeber,dezRunden,dezFehlt]},
+  mix:{name:'Gemischt',chip:'?!',sub:'Aufgaben aus allen Themen',pages:'Wiederholung',gens:[]}};
+let lastGen=null;
+function makeTask(topic){const tk=topic==='mix'?P(Object.keys(TOPICS).filter(k=>k!=='mix')):topic;let g,tries=0;
+  do{g=P(TOPICS[tk].gens);tries++}while(g===lastGen&&tries<6);lastGen=g;const t=g();t.topic=tk;
+  if(t.kind==='choice'){t.order=t.keep?t.opts.map((_,i)=>i):shuffle(t.opts.map((_,i)=>i))}return t}
+function ansTxt(t){if(t.kind==='num')return(t.pre?t.pre+' ':'')+fmt(t.ans)+(t.unit?' '+t.unit:'');if(t.kind==='frac')return t.form==='mixed'?mx(Math.floor(t.ans.n/t.ans.d),t.ans.n%t.ans.d,t.ans.d):fr(t.ans.n,t.ans.d);
+  if(t.kind==='cmp')return{'<':'&lt;','>':'&gt;','=':'='}[t.ans];return t.opts[t.ans]}
+
+// ================= Ton =================
+let AC=null,muted=store.get('mw-mute')==='1';$('mute').textContent=muted?'🔇':'🔊';
+function beep(f,d=.12,type='sine',vol=.12,delay=0){if(muted||!AC)return;const t=AC.currentTime+delay,o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+d)}
+$('mute').addEventListener('click',()=>{muted=!muted;store.set('mw-mute',muted?'1':'0');$('mute').textContent=muted?'🔇':'🔊'});
+
+// ================= Münzen (gemeinsam mit dem English Workshop) =================
+store.set('cc-v2','1');
+const wallet=()=>+(store.get('cc-wallet')||0);
+const showWallet=()=>document.querySelectorAll('.walletN').forEach(e=>e.textContent=wallet());
+const shopOK=location.protocol==='file:'||/github\.io$/.test(location.hostname);
+$('shopLink').hidden=!shopOK;
+
+// ================= Protokoll =================
+let LOG=[];try{LOG=JSON.parse(store.get('mw-log')||'[]');if(!Array.isArray(LOG))LOG=[]}catch(e){LOG=[]}
+const saveLog=()=>{LOG=LOG.slice(-300);store.set('mw-log',JSON.stringify(LOG))};
+const pad=n=>String(n).padStart(2,'0');
+const fmtDur=ms=>{const s=Math.round(ms/1000),h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return h?`${h}:${pad(m)}:${pad(x)}`:`${m}:${pad(x)}`};
+const fmtDate=t=>new Date(t).toLocaleDateString('de-AT',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'});
+const fmtTime=t=>new Date(t).toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'});
+let cur=null,lastTick=0,ticks=0;
+function tick(){if(!cur)return;const now=performance.now(),d=now-lastTick;lastTick=now;if(document.visibilityState==='visible'&&d<5000)cur.ms+=d;$('timer').textContent='⏱ '+fmtDur(cur.ms)}
+function logUpdate(){if(!cur||!G)return;cur.end=Date.now();cur.correct=G.correct;saveLog()}
+function logStart(){cur={start:Date.now(),end:Date.now(),ms:0,topic:TOPICS[G.topic].name,total:G.tasks.length,correct:0,done:false};LOG.push(cur);lastTick=performance.now();saveLog()}
+function logEnd(done){if(!cur)return 0;tick();cur.done=done;logUpdate();const ms=cur.ms;cur=null;return ms}
+setInterval(()=>{if(!cur)return;tick();if(++ticks%5===0)logUpdate()},1000);
+document.addEventListener('visibilitychange',()=>{tick();logUpdate()});
+addEventListener('pagehide',()=>logUpdate());
+function sums(){const d=new Date();d.setHours(0,0,0,0);const day=d.getTime(),wk=day-((d.getDay()+6)%7)*864e5;let t=0,w=0,a=0;LOG.forEach(e=>{a+=e.ms;if(e.start>=wk)w+=e.ms;if(e.start>=day)t+=e.ms});return{t,w,a}}
+function renderTimeBox(){const s=sums();$('timeBox').innerHTML=`<b>Rechenzeit:</b> heute ${fmtDur(s.t)} · diese Woche ${fmtDur(s.w)} · insgesamt ${fmtDur(s.a)}`}
+function renderLog(){const s=sums();
+  $('logSum').innerHTML=[['Heute',s.t],['Diese Woche',s.w],['Insgesamt',s.a]].map(([l,v])=>`<div class="stat"><b>${fmtDur(v)}</b><span>${l}</span></div>`).join('');
+  $('logBody').innerHTML=LOG.slice().reverse().map(e=>`<tr><td>${fmtDate(e.start)}</td><td>${fmtTime(e.start)}–${fmtTime(e.end)}</td><td>${fmtDur(e.ms)}</td><td>${e.topic}</td><td>${e.correct}/${e.total}${e.done?'':' <span class="muted">abgebrochen</span>'}</td></tr>`).join('');
+  $('logEmpty').hidden=LOG.length>0;$('logWrap').hidden=!LOG.length}
+
+// ================= Ablauf =================
+let G=null,LEN=10,lastTopic='mix';
+const screens=['menu','play','end','log'];
+function show(id){screens.forEach(s=>$(s).hidden=s!==id);scrollTo(0,0)}
+function setT(topic){$('app').style.setProperty('--t',`var(--c-${topic})`)}
+function startGame(topic,tasks){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(AC&&AC.state==='suspended')AC.resume();
+  lastTopic=topic;G={topic,tasks:tasks||Array.from({length:LEN},()=>makeTask(topic)),i:0,coins:0,correct:0,streak:0,miss:[],res:[]};
+  show('play');logStart();$('coins').textContent=0;showTask()}
+function showTask(){const t=G.tasks[G.i];setT(t.topic);G.state='ask';
+  $('steps').innerHTML=G.tasks.map((_,i)=>`<i class="${i<G.i?(G.res[i]?'ok':'bad'):i===G.i?'now':''}"></i>`).join('');
+  $('tag').textContent=`${TOPICS[t.topic].name} · Aufgabe ${G.i+1} von ${G.tasks.length}`;
+  $('q').innerHTML=t.q;$('big').innerHTML=t.big||'';$('big').hidden=!t.big;$('fig').innerHTML=t.fig||'';$('fig').hidden=!t.fig;
+  $('fb').hidden=true;$('next').hidden=true;const f=$('ans');
+  if(t.kind==='num'){f.innerHTML=`<div class="inrow">${t.pre?`<span class="pre">${t.pre}</span>`:''}<input class="num" id="inNum" type="text" inputmode="decimal" autocomplete="off" aria-label="Deine Antwort">${t.unit?`<span class="unit">${t.unit}</span>`:''}<button class="check" type="submit">Prüfen</button></div><div class="hint" id="hint"></div>`}
+  else if(t.kind==='frac'){const w=t.form==='mixed'||t.whole;f.innerHTML=`<div class="inrow"><div class="fracin">${w?'<input class="w" id="fw" inputmode="numeric" aria-label="Ganze">':''}<div class="stack"><input id="fn" inputmode="numeric" aria-label="Zähler"><hr><input id="fd" inputmode="numeric" aria-label="Nenner"></div></div><button class="check" type="submit">Prüfen</button></div><div class="hint" id="hint"></div>`}
+  else if(t.kind==='cmp'){f.innerHTML=`<div class="opts cmp">${['<','=','>'].map(s=>`<button type="button" data-v="${s}">${s==='<'?'&lt;':s==='>'?'&gt;':'='}</button>`).join('')}</div>`}
+  else{f.innerHTML=`<div class="opts">${t.order.map(i=>`<button type="button" data-v="${i}">${t.opts[i]}</button>`).join('')}</div>`}
+  const first=f.querySelector('input');if(first)try{first.focus({preventScroll:true})}catch(e){}}
+function parseNum(s,ans){s=s.replace(/[\s  ]/g,'').replace('−','-');if(!s)return null;
+  if(s.includes(','))s=s.replace(/\./g,'').replace(',','.');else if(/^\d{1,3}(\.\d{3})+$/.test(s)&&Number.isInteger(ans)&&ans>=1000)s=s.replace(/\./g,'');
+  const v=Number(s);return Number.isFinite(v)?v:NaN}
+function hint(m){$('hint').textContent=m}
+function submit(){const t=G.tasks[G.i];if(G.state!=='ask')return;
+  if(t.kind==='num'){const v=parseNum($('inNum').value,t.ans);if(v===null){$('inNum').focus();return}if(Number.isNaN(v)){hint('Bitte nur eine Zahl eintragen.');return}
+    return finish(Math.abs(v-t.ans)<1e-7*Math.max(1,Math.abs(t.ans)))}
+  if(t.kind==='frac'){const wv=$('fw')?$('fw').value.trim():'',nv=$('fn').value.trim(),dv=$('fd').value.trim();
+    if(!nv){$('fn').focus();return}if(!dv){$('fd').focus();return}
+    const w=wv?parseInt(wv,10):0,n=parseInt(nv,10),d=parseInt(dv,10);
+    if([w,n,d].some(Number.isNaN)||!/^\d*$/.test(wv+nv+dv)){hint('Bitte nur ganze Zahlen eintragen.');return}
+    if(d===0){hint('Der Nenner darf nicht 0 sein.');return}
+    const eq=(w*d+n)*t.ans.d===t.ans.n*d;
+    if(eq&&t.form==='mixed'&&!wv){hint('Schreib die Ganzen ins linke Feld.');return}
+    if(eq&&t.form==='mixed'&&n>=d){hint('Der Bruch rechts muss kleiner als 1 sein.');return}
+    if(eq&&t.form==='improper'&&w){hint('Gesucht ist ein unechter Bruch, ohne Ganze.');return}
+    if(eq&&t.form==='reduced'&&gcd(n,d)!==1){hint('Stimmt, aber du kannst noch weiter kürzen!');return}
+    return finish(eq)}}
+function finish(ok,btn){const t=G.tasks[G.i];G.state='done';G.res[G.i]=ok;
+  $('ans').querySelectorAll('input,button').forEach(e=>e.disabled=true);
+  if(t.kind==='choice'||t.kind==='cmp'){$('ans').querySelectorAll('.opts button').forEach(b=>{const v=t.kind==='cmp'?b.dataset.v:+b.dataset.v;if(v===t.ans)b.classList.add('right');else if(b===btn)b.classList.add('wrong')})}
+  const fb=$('fb');
+  if(ok){G.streak++;G.correct++;const gain=G.streak%5===0?2:1;G.coins+=gain;$('coins').textContent=G.coins;beep(988,.08,'square',.07);beep(1319,.16,'square',.07,.08);
+    fb.className='fb ok';fb.innerHTML=`<b>${G.streak>=3?`Richtig! ${G.streak} hintereinander 🔥`:'Richtig!'}</b><span>+${gain} ${gain>1?'Münzen (Serien-Bonus)':'Münze'}</span>`}
+  else{G.streak=0;G.miss.push(t);beep(220,.25,'sawtooth',.07);
+    fb.className='fb bad';fb.innerHTML=`<b>Leider falsch.</b><span>Richtig ist: <b>${ansTxt(t)}</b></span><div class="sol">${t.sol}</div>`}
+  fb.hidden=false;$('next').hidden=false;$('next').textContent=G.i+1<G.tasks.length?'Weiter →':'Zum Ergebnis →';try{$('next').focus({preventScroll:true})}catch(e){}
+  $('next').scrollIntoView({block:'nearest',behavior:'smooth'});logUpdate()}
+$('ans').addEventListener('submit',e=>{e.preventDefault();submit()});
+$('ans').addEventListener('click',e=>{const b=e.target.closest('.opts button');if(!b||G.state!=='ask')return;const t=G.tasks[G.i];
+  const v=t.kind==='cmp'?b.dataset.v:+b.dataset.v;finish(v===t.ans,b)});
+$('next').addEventListener('click',()=>{G.i++;if(G.i>=G.tasks.length)endGame(true);else showTask()});
+$('quit').addEventListener('click',()=>endGame(false));
+function endGame(done){const ms=logEnd(done);const total=G.tasks.length;const rate=G.correct/total;
+  const w=wallet()+G.coins;store.set('cc-wallet',w);showWallet();
+  const stars=rate>=.9?3:rate>=.7?2:rate>=.4?1:0;
+  $('stars').innerHTML=[0,1,2].map(i=>`<span class="${i<stars?'':'off'}">★</span>`).join('');
+  $('endTopic').textContent=`${TOPICS[G.topic].name}${done?'':' · abgebrochen'}`;
+  $('endTitle').textContent=stars===3?'Super gemacht!':stars===2?'Gut gemacht!':'Weiter üben!';
+  $('rRight').textContent=`${G.correct}/${total}`;$('rCoins').textContent=G.coins;$('rTime').textContent=fmtDur(ms);
+  $('walletMsg').textContent=`+${G.coins} ${G.coins===1?'Münze':'Münzen'} in die Spardose. Jetzt hast du ${w} Münzen${shopOK?' für den Sticker-Shop im English Workshop':''}.`;
+  $('missBox').hidden=$('retryMiss').hidden=!G.miss.length;$('endShop').hidden=!shopOK;
+  $('missList').innerHTML=G.miss.map(t=>`<li>${t.big&&!t.big.startsWith('<table')?t.big:t.q} → <b>${ansTxt(t)}</b></li>`).join('');
+  setT(G.topic);show('end');beep(784,.1,'square',.06);beep(1047,.2,'square',.06,.1)}
+$('retryMiss').addEventListener('click',()=>startGame(G.topic,shuffle(G.miss).map(t=>({...t}))));
+$('again').addEventListener('click',()=>startGame(G.topic));
+$('toMenu').addEventListener('click',()=>{setT('mix');showWallet();renderTimeBox();show('menu')});
+$('openLog').addEventListener('click',()=>{renderLog();show('log')});
+$('logBack').addEventListener('click',()=>{renderTimeBox();show('menu')});
+$('lenSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;$('lenSeg').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));LEN=+b.dataset.v});
+$('topics').innerHTML=Object.entries(TOPICS).map(([k,t])=>`<button class="topic" data-t="${k}" style="--t:var(--c-${k})"><span class="chip">${t.chip}</span><span class="txt"><b>${t.name}</b><span>${t.sub}</span><span>${t.pages}</span></span></button>`).join('');
+$('topics').addEventListener('click',e=>{const b=e.target.closest('.topic');if(b)startGame(b.dataset.t)});
+showWallet();renderTimeBox();
+</script>
+</body>
+</html>

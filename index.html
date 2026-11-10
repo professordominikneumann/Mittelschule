@@ -11,16 +11,16 @@
 /* Layout: school-hall overview — big name, subject shelves, each game a large tappable tile */
 :root{
   --bg:#EEF2F4; --surface:#FFFFFF; --ink:#1A2630; --muted:#5A6B77; --line:#D5DEE4;
-  --en:#1E7552; --en-soft:#DDEFE4; --gold:#F3B708; --gold-dk:#A87700;
+  --en:#1E7552; --en-soft:#DDEFE4; --ma:#D23B30; --ma-soft:#F8E0DD; --gold:#F3B708; --gold-dk:#A87700;
   --display:"Fredoka","Baloo 2","Trebuchet MS",system-ui,sans-serif;
   --body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#10171C; --surface:#1A242B; --ink:#E7EEF2; --muted:#9AABB6; --line:#2A3740;
-  --en:#45C08A; --en-soft:#183327; --gold:#F6C22C; --gold-dk:#B98600; color-scheme:dark}}
+  --en:#45C08A; --en-soft:#183327; --ma:#F06A5E; --ma-soft:#3A1F1D; --gold:#F6C22C; --gold-dk:#B98600; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#10171C; --surface:#1A242B; --ink:#E7EEF2; --muted:#9AABB6; --line:#2A3740;
-  --en:#45C08A; --en-soft:#183327; --gold:#F6C22C; --gold-dk:#B98600; color-scheme:dark}
+  --en:#45C08A; --en-soft:#183327; --ma:#F06A5E; --ma-soft:#3A1F1D; --gold:#F6C22C; --gold-dk:#B98600; color-scheme:dark}
 
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
@@ -65,15 +65,23 @@ footer{color:var(--muted);font-size:14px}
 <script>
 // Neue Spiele hier eintragen: Fach, Titel, Beschreibung, Klasse, Thema, Link
 const SUBJECTS={
+  mathe:{name:'Mathematik',c:'var(--ma)',soft:'var(--ma-soft)'},
   englisch:{name:'Englisch',c:'var(--en)',soft:'var(--en-soft)'}
 };
 const GAMES=[
+  {fach:'mathe',title:'Mathe-Werkstatt',klasse:'1. Klasse',thema:'Zahlen · Geometrie · Brüche · Kreis · Dezimalzahlen',
+   text:'Rechnen wie im Buch: Stellenwert, Maßstab, Brüche, Kreis und Dezimalzahlen dividieren. Bei Fehlern gibt es den Rechenweg.',
+   url:'mathe-werkstatt.html',art:'math'},
   {fach:'englisch',title:'English Workshop',klasse:'1. Klasse',thema:'Unit 2 · At the zoo',
    text:'Vokabeln üben: Münzen mit der richtigen Übersetzung fangen oder Wörter schreiben. Mit den Münzen kaufst du Zoo-Sticker.',
    url:'english-workshop.html',art:'coins'}
 ];
 
-const ART={coins:`<svg viewBox="0 0 200 110" width="200" height="110" aria-hidden="true">
+const ART={math:`<svg viewBox="0 0 200 110" width="200" height="110" aria-hidden="true">
+  <path d="M60,55 L60,15 A40,40 0 1 1 20,55 Z" style="fill:var(--ma)"/><path d="M60,55 L20,55 A40,40 0 0 1 60,15 Z" style="fill:var(--surface);stroke:var(--ma)" stroke-width="3"/>
+  <polygon points="118,95 186,95 152,30" style="fill:none;stroke:var(--ink)" stroke-width="4" stroke-linejoin="round"/>
+  <text x="152" y="88" text-anchor="middle" style="fill:var(--ink);font:700 15px var(--display)">1:10</text></svg>`,
+  coins:`<svg viewBox="0 0 200 110" width="200" height="110" aria-hidden="true">
   <g fill="var(--gold)" stroke="var(--gold-dk)" stroke-width="3">
     <circle cx="58" cy="30" r="15"/><circle cx="142" cy="22" r="13"/><circle cx="100" cy="12" r="10"/></g>
   <rect x="62" y="60" width="76" height="40" rx="6" fill="#7A4A22"/><rect x="62" y="52" width="76" height="16" rx="6" fill="#9B6233"/>

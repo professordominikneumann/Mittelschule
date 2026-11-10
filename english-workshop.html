@@ -312,11 +312,12 @@ $('grid').addEventListener('click',e=>{const b=e.target.closest('button[data-id]
   S.wallet-=s.price;S.owned.push(s.id);saveShop();confirmId=null;popId=s.id;
   beep(784,.1,'square',.07);beep(1047,.1,'square',.07,.1);beep(1568,.25,'square',.07,.2);renderShop();});
 let shopFrom='menu';
-function openShop(from){shopFrom=from;confirmId=null;$(from).hidden=true;$('shop').hidden=false;$('shop').scrollTop=0;renderShop();}
+function openShop(from){S.wallet=+(store.get('cc-wallet')||0);shopFrom=from;confirmId=null;$(from).hidden=true;$('shop').hidden=false;$('shop').scrollTop=0;renderShop();}
 $('menuShop').addEventListener('click',()=>openShop('menu'));
 $('endShop').addEventListener('click',()=>openShop('end'));
 $('shopBack').addEventListener('click',()=>{$('shop').hidden=true;$(shopFrom).hidden=false;showWallet()});
 showWallet();
+if(location.hash==='#shop')openShop('menu');
 
 // ---------- sound ----------
 let AC=null;
@@ -452,7 +453,7 @@ function endGame(){S.state='end';S.round=null;$('answer').blur();
   $('rTime').textContent=fmtDur(logEnd()||0);renderTimeBox();
   const total=S.idx>=S.deck.length?S.deck.length:S.idx+1, rate=S.correct/Math.max(1,S.deck.length);
   if(S.coins>S.best){S.best=S.coins;store.set('cc-best',S.best)}
-  S.wallet+=S.coins;saveShop();showWallet();
+  S.wallet=+(store.get('cc-wallet')||0)+S.coins;saveShop();showWallet();
   $('walletMsg').textContent=`+${S.coins} ${S.coins===1?'Münze':'Münzen'} in deine Spardose. Jetzt hast du ${S.wallet} Münzen für Sticker.`;
   const stars=rate>=.9?3:rate>=.65?2:rate>=.35?1:0;
   $('stars').innerHTML=[0,1,2].map(i=>`<span class="${i<stars?'':'off'}">★</span>`).join('');
