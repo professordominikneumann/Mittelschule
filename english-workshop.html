@@ -80,6 +80,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 .seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:var(--surface);padding:5px;border-radius:14px}
 .seg.two{grid-template-columns:repeat(2,1fr)}
 .seg button{border:0;background:transparent;color:var(--ink);padding:10px 4px;border-radius:10px;font:600 15px var(--display);cursor:pointer}
+#unitSeg{grid-template-columns:repeat(2,1fr)}
 .seg button small{font:500 12px var(--body);opacity:.85}
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 .go{border:0;background:var(--gold);color:#3A2700;font:700 22px var(--display);padding:16px;border-radius:16px;cursor:pointer;box-shadow:0 4px 0 var(--gold-dk)}
@@ -170,6 +171,7 @@ summary{cursor:pointer;font:600 16px var(--display)}
       <div class="seg" id="unitSeg">
         <button data-v="u2" aria-pressed="true">Unit 2<br><small>At the zoo</small></button>
         <button data-v="u3">Unit 3<br><small>Pirates &amp; body</small></button>
+        <button data-v="u3m">Unit 3<br><small>More words</small></button>
         <button data-v="u3g">Unit 3<br><small>have got</small></button>
       </div></div>
     <div class="group"><h2>Spielart</h2>
@@ -272,13 +274,17 @@ const UNITS={
 ["At last.","Endlich.","s"],["How strange!","Wie komisch!","s"],["Let me see.","Lass mich mal schauen.","s"],
 ["stone","Stein","n"]
 ])},
- u3:{name:'Unit 3 · Pirates & body parts',short:'Unit 3',words:mk([
-  ["hair","Haar(e)","b"],["eye","Auge","b"],["head","Kopf","b"],["ear","Ohr","b"],["mouth","Mund","b"],["nose","Nase","b"],
-  ["neck","Hals","b"],["shoulder","Schulter","b"],["chest","Brust, Brustkorb","b"],["belly","Bauch","b"],["finger","Finger","b"],["knee","Knie","b"],
-  ["toe","Zehe, Zeh","b"],["hand","Hand","b"],["leg","Bein","b"],["foot","Fuß","b"],["arm","Arm","b"],
-  ["treasure","Schatz","p"],["wooden leg","Holzbein","p"],["pirate","Pirat/in","p"],["ship","Schiff","p"],["hook","Haken","p"],["sea","Meer","p"],
-  ["parrot","Papagei","p"],["beard","Bart","p"],["hat","Hut","p"],["captain","Kapitän/in","p"],
-  ["tall","groß (Person)","a"],["short","klein (Person)","a"],["strong","stark","a"]])},
+ u3:{name:'Unit 3 · Pirates & the body',short:'Unit 3',words:mk([
+  ["ship","Schiff","p"],["sea","Meer","p"],["treasure","Schatz","p"],["pirate","Pirat/in","p"],["hook","Haken","p"],["wooden leg","Holzbein","p"],["parrot","Papagei","p"],
+  ["hair","Haar(e)","b"],["eye","Auge","b"],["nose","Nase","b"],["ear","Ohr","b"],["mouth","Mund","b"],["beard","Bart","b"],["finger","Finger","b"],
+  ["arm","Arm","b"],["shoulder","Schulter","b"],["leg","Bein","b"],["foot","Fuß","b"],["feet","Füße","b"],["tooth","Zahn","b"],["teeth","Zähne","b"],
+  ["head","Kopf","b"],["neck","Hals","b"],["chest","Brust, Brustkorb","b"],["belly","Bauch","b"],["knee","Knie","b"],["toe","Zehe, Zeh","b"],["hand","Hand","b"],
+  ["tall","groß (Person)","a"],["short","klein (Person), kurz","a"],["big","groß","a"],["small","klein","a"],["long","lang","a"]])},
+ u3m:{name:'Unit 3 · More words',short:'Unit 3 More',words:mk([
+  ["also","auch","o"],["famous","berühmt","a"],["him","ihm, ihn","r"],["his","sein/e","r"],["to be scared (of)","Angst haben (vor)","v"],["very","sehr","o"],
+  ["strong","stark, kräftig","a"],["captain","Kapitän/in","n"],["pretty","hübsch","a"],["purple","violett, lila","a"],["a lot of, lots of","viel/e","o"],
+  ["bed","Bett","n"],["dream","Traum","n"],["tired","müde","a"],["to guess","raten","v"],["It's your turn.","Du bist an der Reihe.","s"],["brother","Bruder","n"],
+  ["blonde","blond","a"],["real","echt; wirklich","a"],["wrong","falsch, nicht in Ordnung","a"],["Good idea.","Gute Idee.","s"],["true","wahr","a"]])},
  u3g:{name:'Unit 3 · have got / has got',short:'Unit 3 Grammatik',words:[],gram:true}};
 let WORDS=UNITS.u2.words;
 
@@ -361,7 +367,8 @@ const sndMove=()=>beep(520,.04,'triangle',.05);
 // ---------- helpers ----------
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
 function distractors(item,n){
-  const ok=w=>w.id!==item.id&&w.en!==item.en&&w.de!==item.de&&!(w.de.startsWith('sie')&&item.de.startsWith('sie'))&&!(w.de.startsWith('es gibt')&&item.de.startsWith('es gibt'));
+  const vs=t=>new Set(variants(t).map(norm)),ie=vs(item.en),id_=vs(item.de),ovl=(A,B)=>[...A].some(x=>B.has(x));
+  const ok=w=>w.id!==item.id&&!ovl(vs(w.en),ie)&&!ovl(vs(w.de),id_)&&!(w.de.startsWith('sie')&&item.de.startsWith('sie'))&&!(w.de.startsWith('es gibt')&&item.de.startsWith('es gibt'));
   const same=shuffle(WORDS.filter(w=>ok(w)&&w.g===item.g)),rest=shuffle(WORDS.filter(w=>ok(w)&&w.g!==item.g));
   const pool=Math.random()<.7?same.concat(rest):rest.concat(same);return pool.slice(0,n);}
 function wrap(text,maxW){
