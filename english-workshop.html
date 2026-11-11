@@ -80,6 +80,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 .seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:var(--surface);padding:5px;border-radius:14px}
 .seg.two{grid-template-columns:repeat(2,1fr)}
 .seg button{border:0;background:transparent;color:var(--ink);padding:10px 4px;border-radius:10px;font:600 15px var(--display);cursor:pointer}
+.seg button small{font:500 12px var(--body);opacity:.85}
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 .go{border:0;background:var(--gold);color:#3A2700;font:700 22px var(--display);padding:16px;border-radius:16px;cursor:pointer;box-shadow:0 4px 0 var(--gold-dk)}
 .go:active{transform:translateY(2px);box-shadow:0 2px 0 var(--gold-dk)}
@@ -161,16 +162,22 @@ summary{cursor:pointer;font:600 16px var(--display)}
 
   <div class="overlay" id="menu">
     <a class="home" href="index.html">← Alle Spiele</a>
-    <div class="unit">English · 1. Klasse · Unit 2 · At the zoo</div>
+    <div class="unit" id="unitLine">English · 1. Klasse · Unit 2 · At the zoo</div>
     <h1>English <span>Workshop</span></h1>
     <div class="wallet" title="Gesparte Münzen"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="var(--gold)" stroke="var(--gold-dk)" stroke-width="2"/></svg><span class="walletN">0</span><span style="font-size:14px;font-weight:500;color:var(--muted)">gespart</span></div>
     <div class="how"><b>So geht's:</b> Oben steht ein Wort. Drei Münzen fallen herunter. Fang mit der Schatzkiste die Münze mit der richtigen Übersetzung! Bewegen mit den Pfeil-Tasten, den Knöpfen unten oder einfach auf die Spur tippen. Jede richtige Antwort = 1 Münze, jede 5. richtige Antwort hintereinander = 1 Bonus-Münze. Falsch = ein Herz weniger.<br><b>Wörter schreiben:</b> Tippe die Übersetzung ein. Richtig = 2 Münzen, mit 💡 Tipp = 1 Münze. Groß- und Kleinschreibung ist egal, statt ä/ö/ü/ß geht auch ae/oe/ue/ss. Du hast 5 Herzen.</div>
+    <div class="group"><h2>Was willst du üben?</h2>
+      <div class="seg" id="unitSeg">
+        <button data-v="u2" aria-pressed="true">Unit 2<br><small>At the zoo</small></button>
+        <button data-v="u3">Unit 3<br><small>Pirates &amp; body</small></button>
+        <button data-v="u3g">Unit 3<br><small>have got</small></button>
+      </div></div>
     <div class="group"><h2>Spielart</h2>
       <div class="seg two" id="playSeg">
         <button data-v="catch" aria-pressed="true">Münzen fangen</button>
         <button data-v="type">Wörter schreiben</button>
       </div></div>
-    <div class="group"><h2>Richtung</h2>
+    <div class="group" id="dirGroup"><h2>Richtung</h2>
       <div class="seg" id="modeSeg">
         <button data-v="de-en">Deutsch → Englisch</button>
         <button data-v="en-de">Englisch → Deutsch</button>
@@ -180,7 +187,7 @@ summary{cursor:pointer;font:600 16px var(--display)}
       <div class="seg" id="lenSeg">
         <button data-v="10">10</button>
         <button data-v="20" aria-pressed="true">20</button>
-        <button data-v="99">Alle 41</button>
+        <button data-v="99" id="allBtn">Alle 41</button>
       </div></div>
     <div class="group"><h2>Tempo</h2>
       <div class="seg" id="spdSeg">
@@ -193,7 +200,7 @@ summary{cursor:pointer;font:600 16px var(--display)}
     <p id="best"></p>
     <div class="how" id="timeBox"></div>
     <button class="go alt" id="openLog">Spielprotokoll ansehen</button>
-    <details><summary>Wörterliste ansehen (41 Wörter)</summary><table class="vocab" id="vocab"></table></details>
+    <details><summary id="vocabSum">Wörterliste ansehen (41 Wörter)</summary><table class="vocab" id="vocab"></table></details>
   </div>
 
   <div class="overlay" id="end" hidden>
@@ -240,7 +247,18 @@ summary{cursor:pointer;font:600 16px var(--display)}
 </div>
 
 <script>
-const WORDS=[
+const mk=a=>a.map(([en,de,g],i)=>({id:i,en,de,g}));
+const SUBJ_HAS=['He','She','Ben','The captain','Lucy','My sister','The pirate','My dog','Tom'];
+const SUBJ_HAVE=['I','You','We','They','Lucy and I','Schools','The pirates','My friends','Tom and Lisa'];
+const OBJS=['a beard','a pet','a strong arm','a parrot','a hat','red hair','a dog','a laptop','a wooden leg','a ship','a treasure map','long legs','big ears','a hook','blue eyes','a big nose','short hair','a sword'];
+function grammarDeck(n){const out=[];const seen=new Set();let id=0;
+  while(out.length<n){const has=Math.random()<.5,neg=Math.random()<.45;const sub=(has?SUBJ_HAS:SUBJ_HAVE)[Math.random()*9|0];const obj=OBJS[Math.random()*OBJS.length|0];
+    const key=sub+obj;if(seen.has(key))continue;seen.add(key);
+    const form=has?(neg?"hasn't got":'has got'):(neg?"haven't got":'have got');
+    out.push({id:id++,gram:true,en:`${sub} ___ ${obj}.${neg?' (NOT!)':''}`,de:form,full:`${sub} ${form} ${obj}.`,has,neg,g:'gram'})}
+  return out}
+const UNITS={
+ u2:{name:'Unit 2 · At the zoo',short:'Unit 2',words:mk([
 ["zoo","Zoo","n"],["beautiful","schön, hübsch","a"],["behind","hinter","p"],["big","groß","a"],
 ["in front of","vor","p"],["next to","neben","p"],["now","jetzt","o"],["on","auf","p"],
 ["there is (there's)","es gibt, da ist","s"],["there are","es gibt, da sind","s"],["tree","Baum","n"],
@@ -253,7 +271,16 @@ const WORDS=[
 ["to let somebody out","jemanden herauslassen","v"],["us","uns","r"],["car","Auto","n"],
 ["At last.","Endlich.","s"],["How strange!","Wie komisch!","s"],["Let me see.","Lass mich mal schauen.","s"],
 ["stone","Stein","n"]
-].map(([en,de,g],i)=>({id:i,en,de,g}));
+])},
+ u3:{name:'Unit 3 · Pirates & body parts',short:'Unit 3',words:mk([
+  ["hair","Haar(e)","b"],["eye","Auge","b"],["head","Kopf","b"],["ear","Ohr","b"],["mouth","Mund","b"],["nose","Nase","b"],
+  ["neck","Hals","b"],["shoulder","Schulter","b"],["chest","Brust, Brustkorb","b"],["belly","Bauch","b"],["finger","Finger","b"],["knee","Knie","b"],
+  ["toe","Zehe, Zeh","b"],["hand","Hand","b"],["leg","Bein","b"],["foot","Fuß","b"],["arm","Arm","b"],
+  ["treasure","Schatz","p"],["wooden leg","Holzbein","p"],["pirate","Pirat/in","p"],["ship","Schiff","p"],["hook","Haken","p"],["sea","Meer","p"],
+  ["parrot","Papagei","p"],["beard","Bart","p"],["hat","Hut","p"],["captain","Kapitän/in","p"],
+  ["tall","groß (Person)","a"],["short","klein (Person)","a"],["strong","stark","a"]])},
+ u3g:{name:'Unit 3 · have got / has got',short:'Unit 3 Grammatik',words:[],gram:true}};
+let WORDS=UNITS.u2.words;
 
 const $=id=>document.getElementById(id);
 const cv=$('cv'),ctx=cv.getContext('2d'),stage=$('stage');
@@ -356,7 +383,7 @@ let cur=null,lastTick=0,ticks=0;
 function tick(){if(!cur)return;const now=performance.now(),d=now-lastTick;lastTick=now;
   if(document.visibilityState==='visible'&&d<5000)cur.ms+=d;$('timer').textContent='⏱ '+fmtDur(cur.ms);}
 function logUpdate(){if(!cur)return;cur.end=Date.now();cur.correct=S.correct;cur.coins=S.coins;saveLog();}
-function logStart(){cur={start:Date.now(),end:Date.now(),ms:0,play:S.play,words:S.deck.length,correct:0,coins:0,done:false};
+function logStart(){cur={start:Date.now(),end:Date.now(),ms:0,play:S.play,unit:UNITS[S.unit].short,words:S.deck.length,correct:0,coins:0,done:false};
   LOG.push(cur);lastTick=performance.now();saveLog();$('timer').hidden=false;$('timer').textContent='⏱ 0:00';}
 function logEnd(){if(!cur)return 0;tick();cur.done=true;logUpdate();const ms=cur.ms;cur=null;$('timer').hidden=true;return ms;}
 setInterval(()=>{if(!cur)return;tick();if(++ticks%5===0)logUpdate()},1000);
@@ -369,7 +396,7 @@ function renderTimeBox(){const s=sums();
 function renderLog(){const s=sums();
   $('logSum').innerHTML=[['Heute',s.t],['Diese Woche',s.w],['Insgesamt',s.a]].map(([l,v])=>`<div class="stat"><b>${fmtDur(v)}</b><span>${l}</span></div>`).join('');
   $('logBody').innerHTML=LOG.slice().reverse().map(e=>`<tr><td>${fmtDate(e.start)}</td><td>${fmtTime(e.start)}–${fmtTime(e.end)}</td><td>${fmtDur(e.ms)}</td>
-    <td>${e.play==='type'?'Schreiben':'Fangen'}</td><td>${e.correct}/${e.words}${e.done?'':' <span class="ab">abgebrochen</span>'}</td></tr>`).join('');
+    <td>${e.unit||'Unit 2'} · ${e.play==='type'?'Schreiben':'Fangen'}</td><td>${e.correct}/${e.words}${e.done?'':' <span class="ab">abgebrochen</span>'}</td></tr>`).join('');
   $('logEmpty').hidden=LOG.length>0;$('logBody').closest('.tablewrap').hidden=!LOG.length;}
 $('openLog').addEventListener('click',()=>{$('menu').hidden=true;$('log').hidden=false;$('log').scrollTop=0;renderLog()});
 $('logBack').addEventListener('click',()=>{$('log').hidden=true;$('menu').hidden=false;renderTimeBox()});
@@ -400,18 +427,19 @@ function lev(a,b){if(Math.abs(a.length-b.length)>1)return 2;const d=[...Array(b.
   for(let i=1;i<=a.length;i++){let p=d[0];d[0]=i;for(let j=1;j<=b.length;j++){const t=d[j];d[j]=Math.min(d[j]+1,d[j-1]+1,p+(a[i-1]===b[j-1]?0:1));p=t}}return d[b.length];}
 function typeRound(){
   const item=S.deck[S.idx];const dir=S.mode==='mix'?(Math.random()<.5?'de-en':'en-de'):S.mode;
-  const target=dir==='de-en'?item.en:item.de,v=variants(target);
+  const target=item.gram?item.de:dir==='de-en'?item.en:item.de;
+  const v=item.gram?[item.de,item.de.replace("n't",' not'),item.de==='has got'?"'s got":item.de==='have got'?"'ve got":item.de]:variants(target);
   S.round={item,dir,opts:[],y:0,h:52,target,answers:v.map(norm),hintBase:v[0],hint:0};
-  $('ask').textContent=dir==='de-en'?'Schreib das auf Englisch':'Schreib das auf Deutsch';
-  $('word').textContent=dir==='de-en'?item.de:item.en;
-  $('hintline').hidden=true;$('umlauts').hidden=dir==='de-en';$('checkBtn').textContent='Prüfen';
+  $('ask').textContent=item.gram?'Schreib die richtige Form von have got':dir==='de-en'?'Schreib das auf Englisch':'Schreib das auf Deutsch';
+  $('word').textContent=item.gram?item.en:dir==='de-en'?item.de:item.en;
+  $('hintline').hidden=true;$('umlauts').hidden=item.gram||dir==='de-en';$('checkBtn').textContent='Prüfen';
   const inp=$('answer');inp.value='';inp.className='';inp.readOnly=false;
   S.state='type';hud();try{inp.focus({preventScroll:true})}catch(e){}}
 function checkTyped(){
   const r=S.round,inp=$('answer'),val=norm(inp.value);
   if(!val){inp.focus();return}
   S.state='feedback';inp.readOnly=true;$('checkBtn').textContent='Weiter →';
-  const sol=`${r.item.en} = ${r.item.de}`;
+  const sol=solTxt(r.item);
   if(r.answers.includes(val)){S.streak++;S.correct++;let gain=r.hint?1:2;if(S.streak%5===0)gain++;S.coins+=gain;sndOk();
     burst(laneX(1),catchY(),gain);inp.className='ok';
     toast('ok',S.streak>=3?`Richtig! ${S.streak}er-Serie 🔥`:'Richtig!',`+${gain} ${gain===1?'Münze':'Münzen'}`);S.timer=1.4;}
@@ -432,10 +460,14 @@ $('umlauts').addEventListener('click',e=>{const b=e.target.closest('button');if(
 function newRound(){
   if(S.play==='type')return typeRound();
   const item=S.deck[S.idx];const dir=S.mode==='mix'?(Math.random()<.5?'de-en':'en-de'):S.mode;
-  const opts=shuffle([item,...distractors(item,2)]).map((w,i)=>({w,lane:i,correct:w.id===item.id,text:dir==='de-en'?w.en:w.de,alpha:1}));
+  let opts;
+  if(item.gram){const all=['has got','have got',"hasn't got","haven't got"];const twin=item.has?(item.neg?"haven't got":'have got'):(item.neg?"hasn't got":'has got');
+    const third=shuffle(all.filter(f=>f!==item.de&&f!==twin))[0];
+    opts=shuffle([item.de,twin,third]).map((f,i)=>({w:{id:f===item.de?item.id:-1-i},lane:i,correct:f===item.de,text:f,alpha:1}));}
+  else opts=shuffle([item,...distractors(item,2)]).map((w,i)=>({w,lane:i,correct:w.id===item.id,text:dir==='de-en'?w.en:w.de,alpha:1}));
   S.round={item,dir,opts,y:0,h:52};
-  $('ask').textContent=dir==='de-en'?'Wie heißt das auf Englisch?':'Wie heißt das auf Deutsch?';
-  $('word').textContent=dir==='de-en'?item.de:item.en;
+  $('ask').textContent=item.gram?'Welche Form passt?':dir==='de-en'?'Wie heißt das auf Englisch?':'Wie heißt das auf Deutsch?';
+  $('word').textContent=item.gram?item.en:dir==='de-en'?item.de:item.en;
   layoutRound();S.round.y=-S.round.h;S.state='fall';hud();}
 function layoutRound(){const r=S.round,lw=W/3;let h=52;
   r.opts.forEach(o=>{const m=wrap(o.text,lw-30);o.fs=m.fs;o.lines=m.lines;h=Math.max(h,m.lines.length*m.fs*1.2+26)});r.h=h;}
@@ -448,7 +480,7 @@ function resolve(){
     toast('ok',S.streak>=3?`Richtig! ${S.streak}er-Serie 🔥`:'Richtig!',gain===2?'+1 Münze +1 Serien-Bonus':'+1 Münze');S.timer=reduce?1.1:.95;
     r.opts.forEach(x=>{x.caught=x===o});}
   else{S.hearts--;S.streak=0;if(!S.mistakes.includes(r.item))S.mistakes.push(r.item);sndBad();
-    toast('bad','Leider falsch',`${r.item.en} = ${r.item.de}`);S.timer=2.2;r.opts.forEach(x=>{x.caught=false;x.show=x.correct});
+    toast('bad','Leider falsch',solTxt(r.item));S.timer=item_t(r.item);r.opts.forEach(x=>{x.caught=false;x.show=x.correct});
     shake=.35;}
   hud();}
 function next(){$('toast').hidden=true;S.idx++;
@@ -462,11 +494,13 @@ function endGame(){S.state='end';S.round=null;$('answer').blur();
   const stars=rate>=.9?3:rate>=.65?2:rate>=.35?1:0;
   $('stars').innerHTML=[0,1,2].map(i=>`<span class="${i<stars?'':'off'}">★</span>`).join('');
   $('endTitle').textContent=S.hearts<=0?'Keine Herzen mehr!':stars===3?'Super gemacht!':stars===2?'Gut gemacht!':'Weiter üben!';
-  $('endUnit').textContent=S.hearts<=0?`Nach ${total} von ${S.deck.length} Wörtern`:`Alle ${S.deck.length} Wörter geschafft`;
+  $('endUnit').textContent=S.hearts<=0?`Nach ${total} von ${S.deck.length} Aufgaben`:`Alle ${S.deck.length} Aufgaben geschafft`;
   $('rCoins').textContent=S.coins;$('rRight').textContent=`${S.correct}/${S.deck.length}`;$('rBest').textContent=S.best;
   $('missBox').hidden=$('retryMiss').hidden=!S.mistakes.length;
-  $('missList').innerHTML=S.mistakes.map(w=>`<li><b>${w.en}</b> – ${w.de}</li>`).join('');
+  $('missList').innerHTML=S.mistakes.map(w=>w.gram?`<li><b>${w.full}</b></li>`:`<li><b>${w.en}</b> – ${w.de}</li>`).join('');
   $('end').hidden=false;$('toast').hidden=true;updateBest();}
+const solTxt=it=>it.gram?`<b>${it.full}</b>`:`${it.en} = ${it.de}`;
+const item_t=it=>it.gram?3:2.2;
 function hud(){$('coins').textContent=S.coins;
   $('hearts').innerHTML=[...Array(S.maxHearts||3).keys()].map(i=>`<span class="${i<S.hearts?'':'lost'}">♥</span>`).join('');
   $('progress').textContent=S.deck.length?`${Math.min(S.idx+1,S.deck.length)} / ${S.deck.length}`:'';}
@@ -484,11 +518,20 @@ $('mute').addEventListener('click',()=>{S.muted=!S.muted;store.set('cc-mute',S.m
 function seg(id,key,num){$(id).addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
   $(id).querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));S[key]=num?+b.dataset.v:b.dataset.v})}
 seg('playSeg','play');seg('modeSeg','mode');seg('lenSeg','len',1);seg('spdSeg','fall',1);
-$('start').addEventListener('click',()=>startGame(shuffle(WORDS).slice(0,S.len)));
-$('again').addEventListener('click',()=>startGame(shuffle(WORDS).slice(0,S.len)));
+const deck=()=>UNITS[S.unit].gram?grammarDeck(S.len>40?30:S.len):shuffle(WORDS).slice(0,S.len);
+$('start').addEventListener('click',()=>startGame(deck()));
+$('again').addEventListener('click',()=>startGame(deck()));
 $('retryMiss').addEventListener('click',()=>startGame(shuffle(S.mistakes)));
 $('toMenu').addEventListener('click',()=>{$('end').hidden=true;$('menu').hidden=false;S.state='menu';renderTimeBox()});
-$('vocab').innerHTML=WORDS.map(w=>`<tr><td>${w.en}</td><td>${w.de}</td></tr>`).join('');
+function setUnit(u){if(!UNITS[u])u='u2';S.unit=u;const U=UNITS[u];WORDS=U.words;store.set('cc-unit',u);
+  $('unitSeg').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===u));
+  $('unitLine').textContent=`English · 1. Klasse · ${U.name}`;$('dirGroup').hidden=!!U.gram;
+  $('allBtn').textContent=U.gram?'30':`Alle ${WORDS.length}`;
+  if(U.gram){$('vocabSum').textContent='Regel ansehen: have got / has got';
+    $('vocab').innerHTML='<tr><td>I / you / we / they</td><td>have got · haven\'t got</td></tr><tr><td>he / she / it</td><td>has got · hasn\'t got</td></tr><tr><td>Lucy and I, Schools …</td><td>have got (mehrere)</td></tr><tr><td>Ben, the captain …</td><td>has got (eine Person)</td></tr>'}
+  else{$('vocabSum').textContent=`Wörterliste ansehen (${WORDS.length} Wörter)`;$('vocab').innerHTML=WORDS.map(w=>`<tr><td>${w.en}</td><td>${w.de}</td></tr>`).join('')}}
+$('unitSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setUnit(b.dataset.v)});
+setUnit(store.get('cc-unit')||'u2');
 updateBest();
 
 // ---------- render ----------
