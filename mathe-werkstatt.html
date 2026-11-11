@@ -3,7 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
+<style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}.home{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;background:var(--surface);color:var(--ink);text-decoration:none;font:600 15px var(--display);padding:8px 14px;border-radius:999px}
+.home:hover{text-decoration:underline}
+</style>
 <title>Mathe-Werkstatt</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
@@ -139,6 +141,7 @@ form.ans{display:flex;flex-direction:column;gap:10px}
 
 <div class="app" id="app">
   <section class="screen" id="menu">
+    <a class="home" href="index.html">← Alle Spiele</a>
     <div class="eyebrow">Mathematik · 1. Klasse Mittelschule</div>
     <h1>Mathe-Werkstatt</h1>
     <div class="wallet"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" style="fill:var(--gold);stroke:var(--gold-dk)" stroke-width="2"/></svg><span class="walletN">0</span><small>Münzen gespart</small></div>
