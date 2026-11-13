@@ -14,18 +14,18 @@
 :root{
   --bg:#EEF1F3; --surface:#FFFFFF; --ink:#1B232B; --muted:#5B6873; --line:#D6DDE2;
   --ok:#1E8A52; --bad:#C93C3C; --gold:#F3B708; --gold-dk:#A87700; --on-t:#FFFFFF;
-  --c-nat:#D9661A; --c-geo:#2B6CB8; --c-mas:#1C7F94; --c-bru:#D23B30; --c-kre:#A87C00; --c-dez:#237F7A; --c-mix:#5B4FB5;
+  --c-stw:#D9661A; --c-rom:#8A5A1F; --c-run:#B8336A; --c-add:#237F7A; --c-mul:#5B4FB5; --c-vgr:#1C7F94; --c-all:#A87C00; --c-geo:#2B6CB8; --c-mix:#4A5560;
   --display:"Fredoka","Baloo 2","Trebuchet MS",system-ui,sans-serif;
   --body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#10171C; --surface:#1A242B; --ink:#E7EEF2; --muted:#9AABB6; --line:#2C3A44;
   --ok:#4FD08F; --bad:#F06A6A; --gold:#F6C22C; --gold-dk:#B98600; --on-t:#0E1418;
-  --c-nat:#F08A3E; --c-geo:#5C9BE6; --c-mas:#3FB0C6; --c-bru:#F06A5E; --c-kre:#E3B52C; --c-dez:#44B5AE; --c-mix:#9B8FF0; color-scheme:dark}}
+  --c-stw:#F08A3E; --c-rom:#D49A5A; --c-run:#EE6FA0; --c-add:#44B5AE; --c-mul:#9B8FF0; --c-vgr:#3FB0C6; --c-all:#E3B52C; --c-geo:#5C9BE6; --c-mix:#9AA8B4; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#10171C; --surface:#1A242B; --ink:#E7EEF2; --muted:#9AABB6; --line:#2C3A44;
   --ok:#4FD08F; --bad:#F06A6A; --gold:#F6C22C; --gold-dk:#B98600; --on-t:#0E1418;
-  --c-nat:#F08A3E; --c-geo:#5C9BE6; --c-mas:#3FB0C6; --c-bru:#F06A5E; --c-kre:#E3B52C; --c-dez:#44B5AE; --c-mix:#9B8FF0; color-scheme:dark}
+  --c-stw:#F08A3E; --c-rom:#D49A5A; --c-run:#EE6FA0; --c-add:#44B5AE; --c-mul:#9B8FF0; --c-vgr:#3FB0C6; --c-all:#E3B52C; --c-geo:#5C9BE6; --c-mix:#9AA8B4; color-scheme:dark}
 
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.45;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
@@ -44,7 +44,7 @@ button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid var(-
 .topics{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
 .topic{display:flex;gap:12px;align-items:center;text-align:left;border:2px solid transparent;background:var(--surface);border-radius:16px;padding:12px;transition:border-color .15s,transform .15s}
 .topic:hover{border-color:var(--t);transform:translateY(-2px)}
-.chip{flex:none;width:52px;height:52px;border-radius:14px;background:var(--t);color:var(--on-t);display:grid;place-items:center;font:700 18px var(--display)}
+.chip{flex:none;width:52px;height:52px;border-radius:14px;background:var(--t);color:var(--on-t);display:grid;place-items:center;font:700 17px var(--display)}
 .topic .txt b{display:block;font:600 17px var(--display)}
 .topic .txt span{display:block;font-size:13px;color:var(--muted);line-height:1.3}
 .seg{display:inline-grid;grid-template-columns:repeat(2,auto);gap:4px;background:var(--surface);padding:4px;border-radius:12px;align-self:flex-start}
@@ -223,236 +223,283 @@ const lenTxt=mm=>mm%10===0?`${mm/10} cm`:mm<10?`${mm} mm`:`${Math.floor(mm/10)} 
 const scaleTxt=s=>`1 : ${fmt(s)}`;
 const sig1=x=>{const p=10**Math.floor(Math.log10(x));return r6(Math.round(x/p)*p)};
 
-// ================= Natürliche Zahlen =================
+// ================= Stellenwert & Zahlensystem (S. 38–39) =================
 const PL=[['E','Einer',1],['Z','Zehner',10],['H','Hunderter',100],['T','Tausender',1e3],['ZT','Zehntausender',1e4],['HT','Hunderttausender',1e5],['M','Millionen',1e6]];
+const tz=n=>{let k=0;while(n%10===0&&n>0){n/=10;k++}return k};
 function natStellen(){const top=R(2,5);let v=0,parts=[];
   for(let i=top;i>=0;i--){const d=i===top?R(1,9):(Math.random()<.3?0:R(1,9));if(d){parts.push(`${d} ${PL[i][0]}`);v+=d*PL[i][2]}}
   if(parts.length>2&&Math.random()<.3)parts=shuffle(parts);
   return{q:'Schreibe als Zahl an!',big:parts.join(' '),kind:'num',ans:v,sol:`${parts.join(' + ')} = <b>${fmt(v)}</b>`}}
-function natWert(){const L=R(4,7),p=R(0,L-1);const ds=[];
-  for(let i=L-1;i>=0;i--){if(i===p)ds.push(2);else{let d;do{d=R(i===L-1?1:0,9)}while(d===2);ds.push(d)}}
+function stwWert(){const L=R(3,7),p=R(0,L-1);const ds=[];
+  for(let i=L-1;i>=0;i--){if(i===p)ds.push(5);else{let d;do{d=R(i===L-1?1:0,9)}while(d===5);ds.push(d)}}
   const n=+ds.join('');const cand=shuffle([0,1,2,3,4,5,6].filter(x=>x!==p&&x<=L)).slice(0,3);
-  return{q:'Welchen Stellenwert hat die Ziffer 2?',big:fmt(n),kind:'choice',opts:[p,...cand].map(i=>`${PL[i][1]} (${PL[i][0]})`),ans:0,
-    sol:`In ${fmt(n)} steht die 2 an der <b>${PL[p][1]}</b>-Stelle.`}}
-function natRunden(){const i=P([1,1,2,2,3,4]);const p=PL[i][2];const n=R(p*3,Math.min(p*1000,999999));
-  const dg=Math.floor(n/(p/10))%10;const a=Math.round(n/p)*p;
-  return{q:`Runde auf ${PL[i][1]}!`,big:`${fmt(n)} ≈ ?`,kind:'num',ans:a,
-    sol:`Entscheidend ist die ${PL[i-1][1]}-Ziffer <b>${dg}</b> → ${dg>=5?'aufrunden':'abrunden'}: ${fmt(n)} ≈ <b>${fmt(a)}</b>`}}
+  return{q:'Welchen Stellenwert hat die Ziffer 5?',big:fmt(n),kind:'choice',opts:[p,...cand].map(i=>`${PL[i][1]} (${PL[i][0]})`),ans:0,
+    sol:`In ${fmt(n)} steht die 5 an der <b>${PL[p][1]}</b>-Stelle.`}}
+function stwZerlegen(){let n;do{n=R(1000,999999)}while([...String(n)].filter(c=>c!=='0').length<3);
+  const s=String(n),L=s.length,parts=[];for(let i=0;i<L;i++){const d=+s[i];if(d)parts.push(d*10**(L-1-i))}
+  const k=R(0,parts.length-1);
+  return{q:'Zerlege in dekadische Einheiten! Welcher Summand fehlt?',big:`${fmt(n)} = ${parts.map((v,i)=>i===k?hole:fmt(v)).join(' + ')}`,kind:'num',ans:parts[k],
+    sol:`${fmt(n)} = ${parts.map(fmt).join(' + ')} → es fehlt <b>${fmt(parts[k])}</b>`}}
+function stwEinheit(){const j=R(0,3),i=R(j+1,Math.min(6,j+3));let v=R(2,60)*PL[i][2];let txt=`${v/PL[i][2]} ${PL[i][0]}`;
+  if(Math.random()<.5&&i-1>j){const i2=R(j,i-1),d=R(1,9);v+=d*PL[i2][2];txt+=` ${d} ${PL[i2][0]}`}
+  const ans=v/PL[j][2];
+  return{q:`Schreibe in der dekadischen Einheit ${PL[j][0]} (${PL[j][1]}) an!`,big:`${txt} = ? ${PL[j][0]}`,kind:'num',unit:PL[j][0],ans,
+    sol:`${txt} = ${fmt(v)} = <b>${fmt(ans)} ${PL[j][0]}</b>`}}
+const STN=['Einer','Zehner','Hunderter','Tausender','Zehntausender','Hunderttausender'];
+function stwPasst(){const i=R(0,4),j=R(i+1,5);const a=10**(j-i);
+  return{q:'Wie oft passt …',big:`<span style="font-size:.72em">der ${STN[i]} in den ${STN[j]}?</span>`,kind:'num',unit:'mal',ans:a,sol:`${fmt(10**j)} : ${fmt(10**i)} = <b>${fmt(a)}</b> mal`}}
+function stwMio(){const mrd=Math.random()<.4?R(1,9):0,mio=R(mrd?1:10,999),v=mrd*1e9+mio*1e6;const unit=P(['km','Einwohner','€']);
+  const txt=(mrd?`${mrd} Mrd. `:'')+`${mio} Mio.`;
+  return{q:'Schreibe in Ziffernschreibweise!',big:`${txt} ${unit}`,kind:'num',unit,ans:v,sol:`1 Mio. = ${fmt(1e6)}, 1 Mrd. = ${fmt(1e9)} → <b>${fmt(v)} ${unit}</b>`}}
+function stwForm(){const n=R(100000,999999),s=String(n);
+  const form=(str,sh)=>[...str].map((d,k)=>d==='0'?'':`${d} ${PL[str.length-1-k+sh][0]}`).filter(Boolean).join(' ');
+  const swap=()=>{let t,g=0;do{const a=R(1,4),x=s.split('');[x[a],x[a+1]]=[x[a+1],x[a]];t=x.join('')}while(t===s&&g++<20);return t};
+  const opts=[form(s,0),form(s,1)];let g=0;while(opts.length<4&&g++<30){const o=form(swap(),0);if(!opts.includes(o))opts.push(o)}
+  return{q:'Welche Schreibweise entspricht dieser Zahl?',big:fmt(n),kind:'choice',opts,ans:0,sol:`${fmt(n)} = <b>${form(s,0)}</b>`}}
 function natVergl(){let A,B,va,vb;
   if(Math.random()<.5){va=R(1000,99999);vb=va+P([-1,1])*R(1,9)*10**R(0,3);if(vb<1000)vb=va+R(1,9)*10**R(0,2);A=fmt(va);B=fmt(vb)}
   else{const i=R(1,4),j=Math.max(0,i-R(1,2));const x=R(2,40);const y=Math.random()<.25?x*10**(i-j):R(2,400);
     va=x*PL[i][2];vb=y*PL[j][2];A=`${x} ${PL[i][0]}`;B=`${y} ${PL[j][0]}`}
   const s=va<vb?'<':va>vb?'>':'=';const e=s==='<'?'&lt;':s==='>'?'&gt;':'=';
   return{q:'Setze &lt;, = oder &gt; ein!',big:`${A} ${hole} ${B}`,kind:'cmp',ans:s,sol:`${A} = ${fmt(va)} und ${B} = ${fmt(vb)} → <b>${A} ${e} ${B}</b>`}}
-function natZwischen(){const n=Math.random()<.3?R(1,99)*1000:R(1000,999999);
-  return{q:'Welche Zahl liegt dazwischen?',big:`${fmt(n-1)} &lt; ? &lt; ${fmt(n+1)}`,kind:'num',ans:n,sol:`Nachfolger von ${fmt(n-1)} ist <b>${fmt(n)}</b>.`}}
-function natUeber(){const plus=Math.random()<.5;let a=R(8000,19999),b=R(2000,7999);const c=plus?a+b:a-b;const o=[c];
-  while(o.length<4){const x=c+P([-1,1])*(R(15,35)*100+R(0,99));if(x>0&&o.every(y=>Math.abs(y-x)>800))o.push(x)}
+
+// ================= Römische Zahlen (S. 40–41) =================
+const RN=[[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];
+const toRom=n=>{let s='';for(const [v,r] of RN)while(n>=v){s+=r;n-=v}return s};
+const romParts=n=>{const o=[];for(const [v] of RN)while(n>=v){o.push(v);n-=v}return o};
+const RV={I:1,V:5,X:10,L:50,C:100,D:500,M:1000};
+const fromRom=s=>{let t=0;for(let i=0;i<s.length;i++){const a=RV[s[i]],b=RV[s[i+1]]||0;t+=a<b?-a:a}return t};
+const romNum=()=>P([()=>R(1,40),()=>R(1,40),()=>R(40,400),()=>R(400,3999),()=>R(1600,2026)])();
+function romLesen(){if(Math.random()<.15){const [v,r]=P([[1,'I'],[5,'V'],[10,'X'],[50,'L'],[100,'C'],[500,'D'],[1000,'M']]);
+    return{q:'Schreibe mit arabischen Ziffern!',big:r,kind:'num',ans:v,sol:`${r} = <b>${v}</b>`}}
+  const n=romNum(),r=toRom(n);
+  return{q:'Schreibe mit arabischen Ziffern!',big:r,kind:'num',ans:n,sol:`${r} = ${romParts(n).join(' + ')} = <b>${n}</b>`}}
+function romSchreiben(){const n=romNum();
+  return{q:'Übertrage in die römische Schreibweise!',big:`${n} = ?`,kind:'roman',ans:n,sol:`${n} = ${romParts(n).join(' + ')} → <b>${toRom(n)}</b>`}}
+function romVergl(){const a=romNum();let b;do{b=a+P([-1,1])*R(1,a<20?4:a<200?40:300)}while(b<1||b>3999||b===a);
+  const s=a<b?'<':'>',e=s==='<'?'&lt;':'&gt;';
+  return{q:'Setze &lt; oder &gt; ein!',big:`${toRom(a)} ${hole} ${toRom(b)}`,kind:'cmp',ans:s,sol:`${toRom(a)} = ${a} und ${toRom(b)} = ${b} → <b>${toRom(a)} ${e} ${toRom(b)}</b>`}}
+function romJahr(){const n=R(1500,2026);const opts=[n];for(const d of shuffle([1,-1,2,-2,10,-10,100,-100,-9,11])){if(opts.length>=5)break;const x=n+d;if(x<=2026&&!opts.includes(x))opts.push(x)}
+  return{q:'Welche Jahreszahl stellt diese römische Zahl dar?',big:toRom(n),kind:'choice',opts:opts.map(String),ans:0,sol:`${toRom(n)} = ${romParts(n).join(' + ')} = <b>${n}</b>`}}
+function romRegel(){const [t,a]=P([['XI','11'],['IX','9'],['XL','40'],['LX','60'],['CD','400'],['DC','600'],['XC','90'],['CX','110'],['IV','4'],['VI','6']]);
+  const v=fromRom(t),sub=RV[t[0]]<RV[t[1]];
+  return{q:'Wird hier addiert oder subtrahiert?',big:t,kind:'choice',opts:[`addiert: ${t} = ${RV[t[0]]} + ${RV[t[1]]} = ${RV[t[0]]+RV[t[1]]}`,`subtrahiert: ${t} = ${Math.max(RV[t[0]],RV[t[1]])} − ${Math.min(RV[t[0]],RV[t[1]])} = ${Math.max(RV[t[0]],RV[t[1]])-Math.min(RV[t[0]],RV[t[1]])}`],keep:true,ans:sub?1:0,
+    sol:sub?`Das kleinere Zeichen steht <b>links</b> → es wird subtrahiert: ${t} = <b>${v}</b>`:`Das kleinere Zeichen steht <b>rechts</b> → es wird addiert: ${t} = <b>${v}</b>`}}
+
+// ================= Runden, Schätzen, Überschlag (S. 42–47) =================
+function natRunden(){const i=P([1,1,2,2,3,3,4,5,6]);const p=PL[i][2];const n=R(p*3,Math.min(p*300,999999999));
+  const dg=Math.floor(n/(p/10))%10;const a=Math.round(n/p)*p;
+  return{q:`Runde auf ${PL[i][1]}!`,big:`${fmt(n)} ≈ ?`,kind:'num',ans:a,
+    sol:`Beachte die ${PL[i-1][1]}-Ziffer <b>${dg}</b> → ${dg>=5?'aufrunden':'abrunden'}: ${fmt(n)} ≈ <b>${fmt(a)}</b>`}}
+function runFuehrend(){const k=R(2,7);const n=R(10**(k-1)+1,10**k-1);const p=10**(k-1);const a=Math.round(n/p)*p;const dg=Math.floor(n/(p/10))%10;
+  return{q:'Runde auf den führenden Stellenwert!',big:`${fmt(n)} ≈ ?`,kind:'num',ans:a,sol:`Die zweite Ziffer ist <b>${dg}</b> → ${dg>=5?'aufrunden':'abrunden'}: <b>${fmt(a)}</b>`}}
+function runFehler(){const i=P([1,2,2,3]);const p=PL[i][2];let n;do{n=R(p+1,p*100)}while(n%p===0);const a=Math.round(n/p)*p;const e=Math.abs(n-a);
+  return{q:`Runde auf ${PL[i][1]}. Wie groß ist der Rundungsfehler?`,big:`${fmt(n)} (${PL[i][0]})`,kind:'num',ans:e,
+    sol:`${fmt(n)} ≈ ${fmt(a)} (${a>n?'aufgerundet':'abgerundet'}) → Rundungsfehler: ${fmt(Math.max(a,n))} − ${fmt(Math.min(a,n))} = <b>${e}</b>`}}
+function runMinMax(){const i=P([1,2,3]),p=PL[i][2];const v=R(2,99)*p;const mn=v-p/2,mxv=v+p/2-1;const [txt,unit]=P([['Mitarbeiterinnen und Mitarbeiter',''],['Besucherinnen und Besucher',''],['Euro','€']]);
+  const isMin=Math.random()<.5;
+  return{q:`Die Zahl wurde auf ${PL[i][1]} gerundet. Wie groß ist sie ${isMin?'mindestens':'höchstens'}?`,big:`rund ${fmt(v)} ${txt}`,kind:'num',unit,ans:isMin?mn:mxv,
+    sol:isMin?`${fmt(mn)} ist die kleinste Zahl, die auf ${fmt(v)} aufgerundet wird → <b>${fmt(mn)}</b>`:`${fmt(mxv)} ist die größte Zahl, die auf ${fmt(v)} abgerundet wird (${fmt(mxv+1)} ergibt schon ${fmt(v+p)}) → <b>${fmt(mxv)}</b>`}}
+function runPruef(){const i=P([1,2,3]),p=PL[i][2];let n;do{n=R(p+1,p*100)}while(n%p===0);const a=Math.round(n/p)*p;
+  let shown=a;const wrong=Math.random()<.5;if(wrong){const w=[Math.floor(n/p)*p,Math.ceil(n/p)*p,Math.round(n/(p*10))*p*10].filter(x=>x!==a);if(w.length)shown=P(w)}
+  return{q:'Wurde richtig gerundet?',big:`${fmt(n)} (${PL[i][0]}) ≈ ${fmt(shown)}`,kind:'choice',opts:['richtig','falsch'],keep:true,ans:shown===a?0:1,
+    sol:`Richtig ist: ${fmt(n)} ≈ <b>${fmt(a)}</b>${shown===a?' – die Rundung stimmt.':''}`}}
+function natUeber(){const plus=Math.random()<.5;let a=R(plus?8000:13000,19999),b=R(2000,7999);const c=plus?a+b:a-b;const o=[c];
+  for(let g=0;o.length<4&&g<500;g++){const x=c+P([-1,1])*(R(15,45)*100+R(0,99));if(x>0&&o.every(y=>Math.abs(y-x)>800))o.push(x)}
+  while(o.length<4)o.push(c+o.length*1700)
   const ra=Math.round(a/1000)*1000,rb=Math.round(b/1000)*1000;const op=plus?'+':'−';
   return{q:'Finde nur mit Überschlag das richtige Ergebnis!',big:`${fmt(a)} ${op} ${fmt(b)} = ?`,kind:'choice',opts:o.map(fmt),ans:0,
     sol:`Überschlag: ${fmt(ra)} ${op} ${fmt(rb)} = ${fmt(plus?ra+rb:ra-rb)} → am nächsten liegt <b>${fmt(c)}</b>`}}
+function runUeberMal(){const a=R(12,980),b=R(3,98);const c=a*b;const o=[c,c*10,Math.round(c*1.5),Math.round(c*.55)];
+  return{q:'Finde nur mit Überschlag das richtige Ergebnis!',big:`${fmt(a)} · ${b} = ?`,kind:'choice',opts:o.map(fmt),ans:0,
+    sol:`Überschlag: ${fmt(sig1(a))} · ${sig1(b)} = ${fmt(sig1(a)*sig1(b))} → <b>${fmt(c)}</b>`}}
+
+// ================= Addieren & Subtrahieren (S. 48–51) =================
+function addSchrift(){const k=P([2,2,3]);const t=Array.from({length:k},()=>R(10**R(1,3),10**R(3,5)));const s=t.reduce((x,y)=>x+y,0);
+  return{q:'Rechne schriftlich! Mache zuerst einen Überschlag.',big:`${t.map(fmt).join(' + ')} = ?`,kind:'num',ans:s,
+    sol:`Ü: ${t.map(x=>fmt(sig1(x))).join(' + ')} = ${fmt(t.reduce((x,y)=>x+sig1(y),0))}<br>genau: <b>${fmt(s)}</b>`}}
+function subSchrift(){const a=R(1000,99999),b=R(100,a-50);const d=a-b;
+  return{q:'Rechne schriftlich! Mache zuerst einen Überschlag.',big:`${fmt(a)} − ${fmt(b)} = ?`,kind:'num',ans:d,
+    sol:`Ü: ${fmt(sig1(a))} − ${fmt(sig1(b))} = ${fmt(sig1(a)-sig1(b))}<br>genau: <b>${fmt(d)}</b> · Probe: ${fmt(d)} + ${fmt(b)} = ${fmt(a)}`}}
+function addBegriffe(){const a=R(12,900),b=R(12,900),m=Math.max(a,b)+R(10,500),s=Math.min(a,b);const t=R(0,6);
+  const L=[
+    [`Der 1. Summand ist ${a}, der 2. Summand ist ${b}. Wie lautet die Summe?`,a+b,`${a} + ${b} = <b>${a+b}</b>`],
+    [`Ein Summand ist ${a}, die Summe lautet ${a+b}. Wie groß ist der 2. Summand?`,b,`${a+b} − ${a} = <b>${b}</b>`],
+    [`Der Minuend ist ${m}, der Subtrahend ist ${s}. Berechne die Differenz!`,m-s,`${m} − ${s} = <b>${m-s}</b>`],
+    [`Der Minuend ist ${m}, die Differenz lautet ${m-s}. Wie groß ist der Subtrahend?`,s,`${m} − ${m-s} = <b>${s}</b>`],
+    [`Der Subtrahend ist ${s}, die Differenz ist ${m-s}. Wie lautet der Minuend?`,m,`${m-s} + ${s} = <b>${m}</b>`],
+    [`Addiere zur Differenz von ${m} und ${s} die Summe der beiden Zahlen!`,(m-s)+(m+s),`(${m} − ${s}) + (${m} + ${s}) = ${m-s} + ${m+s} = <b>${2*m}</b>`],
+    [`Subtrahiere die Differenz von ${m} und ${s} von der Summe der beiden Zahlen!`,(m+s)-(m-s),`(${m} + ${s}) − (${m} − ${s}) = ${m+s} − ${m-s} = <b>${2*s}</b>`]][t];
+  return{q:'Arbeite mit den Fachausdrücken!',big:`<span style="font-size:.66em;line-height:1.5;display:block">${L[0]}</span>`,kind:'num',ans:L[1],sol:L[2]}}
 function natX(){const x=R(5,900);const f=R(0,3);let big,sol;
   if(f===0){const a=R(10,999);big=`<i>x</i> + ${a} = ${fmt(x+a)}`;sol=`<i>x</i> = ${fmt(x+a)} − ${a} = <b>${x}</b>`}
   else if(f===1){const s=x+R(10,999);big=`${fmt(s)} − <i>x</i> = ${s-x}`;sol=`<i>x</i> = ${fmt(s)} − ${s-x} = <b>${x}</b>`}
-  else if(f===2){const a=R(10,200),b=R(10,200);big=`${a} + <i>x</i> + ${b} = ${fmt(a+x+b)}`;sol=`<i>x</i> = ${fmt(a+x+b)} − ${a} − ${b} = <b>${x}</b>`}
-  else{const r=R(10,300),b=R(5,50),a=r+b+x;big=`${fmt(a)} − ${b} − <i>x</i> = ${r}`;sol=`<i>x</i> = ${fmt(a)} − ${b} − ${r} = <b>${x}</b>`}
+  else if(f===2){const a=R(10,200),b=R(10,200);big=`<i>x</i> + ${a} + ${b} = ${fmt(a+x+b)}`;sol=`<i>x</i> = ${fmt(a+x+b)} − ${a} − ${b} = <b>${x}</b>`}
+  else{const b=R(10,400);big=`<i>x</i> − ${b} = ${x}`;sol=`<i>x</i> = ${x} + ${b} = <b>${x+b}</b>`;return{q:'Welche Zahl musst du für <i>x</i> einsetzen?',big,kind:'num',ans:x+b,sol}}
   return{q:'Welche Zahl musst du für <i>x</i> einsetzen?',big,kind:'num',ans:x,sol}}
+function addVorteil(){const pair=()=>{const x=R(11,89);if(x%10===0)return pair();const y=Math.ceil(x/10)*10+10*R(0,4)-x;return[x,y]};
+  const p1=pair(),p2=pair();const t=shuffle([...p1,...p2]);const s=p1[0]+p1[1]+p2[0]+p2[1];
+  return{q:'Rechne vorteilhaft! Vertausche die Summanden geschickt.',big:`${t.join(' + ')} = ?`,kind:'num',ans:s,
+    sol:`(${p1[0]} + ${p1[1]}) + (${p2[0]} + ${p2[1]}) = ${p1[0]+p1[1]} + ${p2[0]+p2[1]} = <b>${s}</b>`}}
+function addGesetz(){let a;do{a=R(12,98)}while(a%10===0||a%11===0);const b=R(2,9);const rv=+String(a).split('').reverse().join('');
+  return{q:'Welches Beispiel zeigt das Vertauschungsgesetz richtig?',kind:'choice',opts:[`${a} + ${b} = ${b} + ${a}`,`${a} + ${b} = ${b} + ${rv}`,`${b} + ${a} = ${b} + ${a}`,`${b} + ${a} = ${rv} + ${b}`],ans:0,
+    sol:`Beim Vertauschungsgesetz tauschen die Summanden den Platz: a + b = b + a → <b>${a} + ${b} = ${b} + ${a}</b>`}}
 
-// ================= Geometrie =================
-const FEM=new Set(['Raute','Pyramide','Kugel','Gerade','Strecke','Sehne','Sekante','Tangente','Passante']);
+// ================= Multiplizieren & Dividieren (S. 52–57) =================
+function mulNull(){const a=(Math.random()<.3?R(11,51):R(2,9))*10**R(1,2),b=R(2,9)*10**R(1,2);const za=tz(a),zb=tz(b);const c=a*b;
+  return{q:'Rechne im Kopf vorteilhaft!',big:`${fmt(a)} · ${fmt(b)} = ?`,kind:'num',ans:c,
+    sol:`Nullen weglassen: ${a/10**za} · ${b/10**zb} = ${(a/10**za)*(b/10**zb)}, dann ${za+zb} Nullen anhängen → <b>${fmt(c)}</b>`}}
+function mul10(){const f=P([10,100,1000]);if(Math.random()<.5){const n=R(2,9999);return{q:'Rechne im Kopf!',big:`${fmt(n)} · ${fmt(f)} = ?`,kind:'num',ans:n*f,sol:`${tz(f)} Null${tz(f)>1?'en':''} anhängen → <b>${fmt(n*f)}</b>`}}
+  const n=R(2,9999)*f;return{q:'Rechne im Kopf!',big:`${fmt(n)} : ${fmt(f)} = ?`,kind:'num',ans:n/f,sol:`${tz(f)} Null${tz(f)>1?'en':''} streichen → <b>${fmt(n/f)}</b>`}}
+function divNull(){const d=R(2,9)*10**R(1,3),q=R(2,9)*10**R(0,1);const D=d*q;const k=Math.min(tz(D),tz(d));
+  return{q:'Rechne im Kopf vorteilhaft!',big:`${fmt(D)} : ${fmt(d)} = ?`,kind:'num',ans:q,sol:`Gleich viele Nullen streichen: ${fmt(D/10**k)} : ${fmt(d/10**k)} = <b>${fmt(q)}</b>`}}
+function mulSchrift(){let a,b;if(Math.random()<.5){a=R(105,9999);b=R(2,9)}else{a=R(23,999);b=R(12,98)}const c=a*b;
+  return{q:'Rechne schriftlich! Mache zuerst einen Überschlag.',big:`${fmt(a)} · ${b} = ?`,kind:'num',ans:c,
+    sol:`Ü: ${fmt(sig1(a))} · ${sig1(b)} = ${fmt(sig1(a)*sig1(b))}<br>genau: <b>${fmt(c)}</b>`}}
+function divOhne(){let d,q;if(Math.random()<.55){d=R(2,9);q=R(12,9999)}else{d=R(11,99);q=R(12,999)}const D=d*q;
+  return{q:'Dividiere! Diese Division hat keinen Rest.',big:`${fmt(D)} : ${d} = ?`,kind:'num',ans:q,
+    sol:`Ü: ${fmt(sig1(D))} : ${sig1(d)} ≈ ${fmt(Math.round(sig1(D)/sig1(d)))}<br>genau: <b>${fmt(q)}</b> · Probe: ${fmt(q)} · ${d} = ${fmt(D)}`}}
+function divRest(){let d,q;if(Math.random()<.55){d=R(3,9);q=R(12,999)}else{d=R(11,68);q=R(12,999)}const r=R(1,d-1),D=q*d+r;
+  return{q:'Dividiere mit Rest!',big:`${fmt(D)} : ${d} = ?`,kind:'qr',ans:{q,r},sol:`${fmt(D)} : ${d} = <b>${fmt(q)} Rest ${r}</b><br>Probe: ${fmt(q)} · ${d} + ${r} = ${fmt(D)}`}}
+function mulBegriffe(){const a=R(2,12),b=R(3,25),t=R(0,4);
+  const L=[[`Der erste Faktor ist ${a}, der zweite Faktor ist ${b}. Wie lautet das Produkt?`,a*b,`${a} · ${b} = <b>${a*b}</b>`],
+    [`Das Produkt ist ${a*b}. Ein Faktor ist ${a}. Wie lautet der zweite Faktor?`,b,`${a*b} : ${a} = <b>${b}</b>`],
+    [`Bestimme den Quotienten der Zahlen ${a*b} und ${a}.`,b,`${a*b} : ${a} = <b>${b}</b>`],
+    [`Der Quotient ist ${b}, der Dividend ist ${a*b}. Wie lautet der Divisor?`,a,`${a*b} : ${b} = <b>${a}</b>`],
+    [`Multipliziere das Produkt der Zahlen ${a} und ${b} mit ${R(2,5)===2?2:3}.`,null,null]][t];
+  if(L[1]===null){const f=L[0].endsWith('2.')?2:3;L[1]=a*b*f;L[2]=`(${a} · ${b}) · ${f} = ${a*b} · ${f} = <b>${a*b*f}</b>`}
+  return{q:'Arbeite mit den Fachausdrücken!',big:`<span style="font-size:.66em;line-height:1.5;display:block">${L[0]}</span>`,kind:'num',ans:L[1],sol:L[2]}}
+function mulFehler(){const f=P([10,100,1000]);let ex,c;if(Math.random()<.5){const n=R(2,999)*P([1,10]);ex=`${fmt(n)} · ${fmt(f)}`;c=n*f}else{const n=R(2,999)*f;ex=`${fmt(n)} : ${fmt(f)}`;c=n/f}
+  const wrong=Math.random()<.5;const shown=wrong?(Math.random()<.5?c*10:c/10):c;if(!Number.isInteger(shown))return mulFehler();
+  return{q:'Stimmt das Ergebnis?',big:`${ex} = ${fmt(shown)}`,kind:'choice',opts:['stimmt','stimmt nicht'],keep:true,ans:wrong?1:0,sol:`Richtig ist: ${ex} = <b>${fmt(c)}</b>`}}
+function mulNah100(){const div=Math.random()<.5;const items=[];const used=new Set();
+  const make=near=>{for(let g=0;g<50;g++){const a=R(2,9);let b=Math.round(100/a);if(!near)b+=P([-1,1])*(Math.ceil(16/a)+R(0,4));const v=a*b;if(b<2||used.has(v))continue;used.add(v);
+      return div?{t:`${fmt(v*a)} : ${a}`,v:b*a===v?v:v,r:v}:{t:`${a} · ${b}`,r:v}}};
+  const c=make(true);items.push(c);while(items.length<4){const x=make(false);if(x)items.push(x)}
+  if(div)items.forEach(it=>{const a=+it.t.split(' : ')[1];it.t=`${fmt(it.r*a)} : ${a}`});
+  return{q:'Welches Ergebnis liegt am nächsten bei 100? Löse mit Überschlag!',kind:'choice',opts:items.map(i=>i.t),ans:0,
+    sol:items.map((i,k)=>`${i.t} = ${k===0?'<b>'+fmt(i.r)+'</b>':fmt(i.r)}`).join(' · ')}}
+
+// ================= Vier Grundrechnungsarten (S. 58–61) =================
+function vgrPunkt(){const t=R(0,5);let d,v,s;
+  if(t===0){const b=R(2,9),c=R(2,12),a=b*c+R(5,90);v=a-b*c;d=`${a} − ${b} · ${c}`;s=`${a} − ${b*c} = <b>${v}</b>`}
+  else if(t===1){const a=R(5,90),b=R(2,9),c=R(2,12);v=a+b*c;d=`${a} + ${b} · ${c}`;s=`${a} + ${b*c} = <b>${v}</b>`}
+  else if(t===2){const a=R(2,9),b=R(3,12),c=R(1,a*b-1);v=a*b-c;d=`${a} · ${b} − ${c}`;s=`${a*b} − ${c} = <b>${v}</b>`}
+  else if(t===3){const b=R(2,9),q=R(2,12),c=R(2,40);v=q+c;d=`${b*q} : ${b} + ${c}`;s=`${q} + ${c} = <b>${v}</b>`}
+  else if(t===4){const a=R(2,9),b=R(2,9),c=R(2,9),e=R(2,9);v=a*b+c*e;d=`${a} · ${b} + ${c} · ${e}`;s=`${a*b} + ${c*e} = <b>${v}</b>`}
+  else{const b=R(2,9),q1=R(5,15),e=R(2,9),q2=R(1,q1-1);v=q1-q2;d=`${b*q1} : ${b} − ${e*q2} : ${e}`;s=`${q1} − ${q2} = <b>${v}</b>`}
+  return{q:'Berechne! Punktrechnung vor Strichrechnung.',big:`${d} = ?`,kind:'num',ans:v,sol:`${d} = ${s}`}}
+function vgrKlammer(){const t=R(0,3);let d,v,s;
+  if(t===0){const a=R(2,40),b=R(2,40),c=R(2,9);v=(a+b)*c;d=`(${a} + ${b}) · ${c}`;s=`${a+b} · ${c} = <b>${v}</b>`}
+  else if(t===1){const a=R(2,9),c=R(1,20),b=c+R(1,20);v=a*(b-c);d=`${a} · (${b} − ${c})`;s=`${a} · ${b-c} = <b>${v}</b>`}
+  else if(t===2){const c=R(2,9),q=R(2,12),b=R(1,40),a=c*q+b;v=q;d=`(${a} − ${b}) : ${c}`;s=`${a-b} : ${c} = <b>${v}</b>`}
+  else{const c=R(1,30),b=c+R(1,30),a=b+R(1,60);v=a-(b-c);d=`${a} − (${b} − ${c})`;s=`${a} − ${b-c} = <b>${v}</b>`}
+  return{q:'Berechne! Die Klammer wird zuerst gerechnet.',big:`${d} = ?`,kind:'num',ans:v,sol:`${d} = ${s}`}}
+function vgrText(){const t=R(0,4);let x,v,s;
+  if(t===0){const a=R(3,60),b=R(3,60),c=R(2,9);x=`Multipliziere die Summe von ${a} und ${b} mit ${c}.`;v=(a+b)*c;s=`(${a} + ${b}) · ${c} = ${a+b} · ${c} = <b>${v}</b>`}
+  else if(t===1){const b=R(3,50),a=b+R(2,40),c=R(2,9);x=`Multipliziere die Differenz von ${a} und ${b} mit ${c}.`;v=(a-b)*c;s=`(${a} − ${b}) · ${c} = ${a-b} · ${c} = <b>${v}</b>`}
+  else if(t===2){const c=R(2,9),q=R(2,15),b=R(5,60);x=`Addiere zum Quotienten von ${c*q} und ${c} die Zahl ${b}.`;v=q+b;s=`${c*q} : ${c} + ${b} = ${q} + ${b} = <b>${v}</b>`}
+  else if(t===3){const a=R(3,12),c=R(3,12),b=R(1,a*c-1);x=`Die Zahl ${b} soll vom Produkt von ${a} und ${c} subtrahiert werden.`;v=a*c-b;s=`${a} · ${c} − ${b} = ${a*c} − ${b} = <b>${v}</b>`}
+  else{const sm=R(5,30),k=R(2,15),Pp=sm*k;const divs=[];for(let i=2;i<Pp;i++)if(Pp%i===0&&i<=40&&Pp/i<=40)divs.push(i);const a=divs.length?P(divs):sm,c=Pp/a,x1=R(1,sm-1),y1=sm-x1;
+    x=`Dividiere das Produkt von ${a} und ${c} durch die Summe von ${x1} und ${y1}.`;v=k;s=`(${a} · ${c}) : (${x1} + ${y1}) = ${Pp} : ${sm} = <b>${k}</b>`}
+  return{q:'Schreibe die Aufgabe an und rechne aus!',big:`<span style="font-size:.66em;line-height:1.5;display:block">${x}</span>`,kind:'num',ans:v,sol:s}}
+function vgrDistri(){const a=R(3,60);let b=R(2,9),c=R(2,9);const t=R(0,2);
+  if(t===0){c=10-b<1?1:10*R(1,3)-b;return{q:'Rechne vorteilhaft mit dem Verteilungsgesetz!',big:`${a} · ${b} + ${a} · ${c} = ?`,kind:'num',ans:a*(b+c),sol:`${a} · (${b} + ${c}) = ${a} · ${b+c} = <b>${a*(b+c)}</b>`}}
+  if(t===1){b=c+R(1,9);return{q:'Rechne vorteilhaft mit dem Verteilungsgesetz!',big:`${a} · ${b} − ${a} · ${c} = ?`,kind:'num',ans:a*(b-c),sol:`${a} · (${b} − ${c}) = ${a} · ${b-c} = <b>${a*(b-c)}</b>`}}
+  const x=R(11,89);const y=Math.ceil(x/10)*10+10*R(0,3)-x||10;const k=R(2,9);
+  return{q:'Rechne vorteilhaft mit dem Verteilungsgesetz!',big:`${x} · ${k} + ${y} · ${k} = ?`,kind:'num',ans:(x+y)*k,sol:`(${x} + ${y}) · ${k} = ${x+y} · ${k} = <b>${(x+y)*k}</b>`}}
+function vgrPassend(){const a=R(12,40),b=R(2,9),c=R(2,9);
+  const T=[[`Die Summe der Zahlen ${a} und ${b} ist mit ${c} zu multiplizieren.`,`(${a} + ${b}) · ${c}`],[`Die Differenz der Zahlen ${a} und ${b} ist mit ${c} zu multiplizieren.`,`(${a} − ${b}) · ${c}`],
+    [`Das Produkt von ${a} und ${b} ist durch ${c} zu dividieren.`,`(${a} · ${b}) : ${c}`],[`Zur Zahl ${a} ist das Produkt von ${b} und ${c} zu addieren.`,`${a} + ${b} · ${c}`]];
+  const k=R(0,3);const others=shuffle(T.filter((_,i)=>i!==k).map(t=>t[1]).concat([`${a} + ${b} · ${c}`===T[k][1]?`(${a} + ${b}) : ${c}`:`(${a} + ${b}) · ${c}`].filter(o=>o!==T[k][1])));
+  const opts=[T[k][1],...[...new Set(others)].slice(0,3)];
+  return{q:'Welche Rechnung passt zum Text?',big:`<span style="font-size:.66em;line-height:1.5;display:block">${T[k][0]}</span>`,kind:'choice',opts,ans:0,sol:`Passend ist <b>${T[k][1]}</b>`}}
+function vgrVar(){const b=R(2,8),c=b*R(2,4),a=c*R(2,5);const F=[['<i>a</i> + <i>b</i> − <i>c</i>',a+b-c,`${a} + ${b} − ${c}`],['<i>a</i> : <i>c</i> + <i>b</i>',a/c+b,`${a} : ${c} + ${b}`],
+    ['(<i>a</i> + <i>c</i>) : <i>b</i>',(a+c)/b,`(${a} + ${c}) : ${b}`],['<i>a</i> − <i>b</i> · 2',a-b*2,`${a} − ${b} · 2`]];
+  const f=P(F);return{q:`Setze ein: <i>a</i> = ${a}, <i>b</i> = ${b}, <i>c</i> = ${c}`,big:`${f[0]} = ?`,kind:'num',ans:f[1],sol:`${f[2]} = <b>${f[1]}</b>`}}
+
+// ================= Alltagsaufgaben (S. 62–63) =================
+function alltag(){const t=R(0,11);let x,v,u,s;
+  if(t===0){const n=R(3,8),k=R(5,90)*10;x=`${n} Freunde spielen Toto und gewinnen ${fmt(n*k)} €. Sie teilen den Betrag gerecht. Wie viel erhält jeder?`;v=k;u='€';s=`${fmt(n*k)} : ${n} = <b>${fmt(k)} €</b>`}
+  else if(t===1){const r=R(8,30),p=R(12,60);x=`Die Tribüne eines Eislaufplatzes hat ${r} Reihen zu je ${p} Sitzplätzen. Wie viele Personen fasst die Tribüne?`;v=r*p;u='Personen';s=`${r} · ${p} = <b>${v}</b>`}
+  else if(t===2){const a=R(300,999),b=R(100,500);x=`In einem Wald stehen ${a} Buchen. Der Förster lässt noch ${b} Buchen pflanzen. Wie viele Buchen stehen nun im Wald?`;v=a+b;u='Buchen';s=`${a} + ${b} = <b>${v}</b>`}
+  else if(t===3){const tot=R(500,1200),bu=R(200,tot-200);x=`In einem Ort sind ${tot} schulpflichtige Kinder, davon ${bu} Buben. Wie viele Mädchen sind schulpflichtig?`;v=tot-bu;u='Mädchen';s=`${tot} − ${bu} = <b>${v}</b>`}
+  else if(t===4){const b=R(8,30),k=R(6,24);x=`Es sollen ${b*k} Milchpackungen in ${b} Schachteln verpackt werden. Wie viele Packungen sind in einer Schachtel?`;v=k;u='Packungen';s=`${b*k} : ${b} = <b>${k}</b>`}
+  else if(t===5){const k=R(100,800);x=`${fmt(k*12)} Eier sollen in Kartons zu je 12 Eiern verpackt werden. Wie viele Kartons werden benötigt?`;v=k;u='Kartons';s=`${fmt(k*12)} : 12 = <b>${k}</b>`}
+  else if(t===6){const p=R(60,140),d=R(5,21);x=`Im Hotel kostet die Vollpension ${p} € pro Tag. Herr Bauer möchte ${d} Tage lang Urlaub machen. Wie viel muss er bezahlen?`;v=p*d;u='€';s=`${p} · ${d} = <b>${fmt(v)} €</b>`}
+  else if(t===7){const sz=R(400,1200),vv=R(100,Math.floor(sz/2)),ak=R(50,Math.floor(sz/4)),fr=R(10,60);x=`Ein Kino hat ${sz} Sitzplätze. Im Vorverkauf wurden ${vv} Karten, an der Abendkassa ${ak} Karten verkauft; außerdem gab es ${fr} Freikarten. Wie viele Plätze blieben leer?`;v=sz-vv-ak-fr;u='Plätze';s=`${sz} − ${vv} − ${ak} − ${fr} = <b>${v}</b>`}
+  else if(t===8){const w=R(50,90),ib=w+R(10,50),j=R(5,16);x=`Die Hundesteuer beträgt in Wien ${w} € pro Jahr, in Innsbruck ${ib} €. Ein Dackel in Innsbruck ist ${j} Jahre alt geworden. Wie viel Euro hätte sich der Besitzer in Wien gespart?`;v=(ib-w)*j;u='€';s=`(${ib} − ${w}) · ${j} = ${ib-w} · ${j} = <b>${v} €</b>`}
+  else if(t===9){const n=R(30,150),g=R(2,9);x=`Zu einem Schirennen haben sich ${n} Personen gemeldet. Jede muss ${g} € Nenngeld bezahlen. Wie hoch sind die Einnahmen?`;v=n*g;u='€';s=`${n} · ${g} = <b>${v} €</b>`}
+  else if(t===10){const a=R(20,52),b=R(20,52);x=`Eine Firma macht einen Betriebsausflug. In einem Autobus sitzen ${a} Personen, im anderen ${b}. Wie viele Personen nehmen teil?`;v=a+b;u='Personen';s=`${a} + ${b} = <b>${v}</b>`}
+  else{const free=R(3,10);let p=52-free;const st=[];for(let i=0;i<3;i++){const o=R(2,Math.min(17,p)),e=R(2,Math.min(12,52-(p-o)));st.push([o,e]);p=p-o+e}
+    x=`In einem Schulbus mit 52 Sitzplätzen sind bei der Abfahrt ${free} Plätze frei. ${st.map((q,i)=>`Bei der ${i+1}. Haltestelle steigen ${q[0]} aus und ${q[1]} ein.`).join(' ')} Wie viele Personen kommen an?`;v=p;u='Personen';
+    s=`52 − ${free}${st.map(q=>` − ${q[0]} + ${q[1]}`).join('')} = <b>${v}</b>`}
+  return{q:'Löse die Alltagsaufgabe!',big:`<span style="font-size:.62em;line-height:1.5;display:block">${x}</span>`,kind:'num',unit:u,ans:v,sol:s}}
+
+// ================= Geometrie (S. 86–89) =================
+const FEM=new Set(['Gerade','Strecke','Normale','Parallele']);
 const art=w=>FEM.has(w)?'eine':'ein';
-const RIDDLES=[
- ['Ich besitze einen Anfangspunkt und keinen Endpunkt.','Strahl','lin'],
- ['Ich habe einen Anfangspunkt und einen Endpunkt. Meine Länge kann man messen.','Strecke','lin'],
- ['Ich habe weder einen Anfangspunkt noch einen Endpunkt.','Gerade','lin'],
- ['Ich werde mit Großbuchstaben beschriftet.','Punkt','lin'],
- ['Eine Spitze, eine Kante und zwei Flächen begrenzen mich.','Kegel','kor'],
- ['Mich umhüllen vier dreieckige Seitenflächen und eine quadratische Grundfläche. Ich habe 8 Kanten und 5 Eckpunkte.','Pyramide','kor'],
- ['Ich habe 8 Ecken, 12 Kanten und sechs rechteckige Flächen.','Quader','kor'],
- ['Ich habe sechs gleich große quadratische Flächen.','Würfel','kor'],
- ['Ich habe zwei kreisförmige Flächen und eine gekrümmte Mantelfläche.','Zylinder','kor'],
- ['Ich habe keine Ecken und keine Kanten, nur eine gekrümmte Fläche.','Kugel','kor'],
- ['Ich habe vier gleich lange Seiten, die normal aufeinander stehen, und zwei gleich lange Diagonalen.','Quadrat','fl'],
- ['Ich habe zwei normal aufeinander stehende Diagonalen und jeweils zwei Paar gleich lange angrenzende Seiten.','Deltoid','fl'],
- ['Ich habe vier rechte Winkel. Meine gegenüberliegenden Seiten sind gleich lang, aber nicht alle vier.','Rechteck','fl'],
- ['Ich habe vier gleich lange Seiten, aber keine rechten Winkel.','Raute','fl'],
- ['Ich habe genau ein Paar parallele Seiten.','Trapez','fl'],
- ['Meine gegenüberliegenden Seiten sind parallel und gleich lang. Rechte Winkel habe ich keine.','Parallelogramm','fl'],
- ['Ich habe drei Ecken und drei Seiten.','Dreieck','fl']];
-function geoRaetsel(){const [t,a,g]=P(RIDDLES);const others=shuffle(RIDDLES.filter(r=>r[2]===g&&r[1]!==a).map(r=>r[1])).slice(0,3);
+const RIDDLES=[['Ich habe einen Anfangspunkt, aber keinen Endpunkt.','Strahl'],
+ ['Ich habe einen Anfangspunkt und einen Endpunkt. Meine Länge kann man messen.','Strecke'],
+ ['Ich habe weder einen Anfangspunkt noch einen Endpunkt. Man bezeichnet mich mit einem Kleinbuchstaben.','Gerade'],
+ ['Man bezeichnet mich mit einem Großbuchstaben und markiert mich mit einem Kreuz.','Punkt'],
+ ['Ich bin die kürzeste Verbindung zwischen einem Punkt und einer Geraden.','Abstand'],
+ ['Ich schneide eine andere Gerade im rechten Winkel.','Normale'],
+ ['Ich habe überall den gleichen Abstand zu einer anderen Geraden und treffe sie nie.','Parallele'],
+ ['In mir kreuzen sich zwei Geraden.','Schnittpunkt']];
+function geoRaetsel(){const [t,a]=P(RIDDLES);const others=shuffle(RIDDLES.filter(r=>r[1]!==a).map(r=>r[1])).slice(0,3);
   return{q:'Wer bin ich?',big:`<span style="font-size:.72em">„${t}“</span>`,kind:'choice',opts:[a,...others],ans:0,sol:`Ich bin ${art(a)} <b>${a}</b>.`}}
-const SH={fl:{
-  Dreieck:'<polygon class="sv-shape" points="55,105 145,105 100,18"/>',
-  Quadrat:'<rect class="sv-shape" x="55" y="15" width="90" height="90"/>',
-  Rechteck:'<rect class="sv-shape" x="25" y="28" width="150" height="66"/>',
-  Trapez:'<polygon class="sv-shape" points="30,100 170,100 135,25 70,25"/>',
-  Parallelogramm:'<polygon class="sv-shape" points="20,100 135,100 180,25 65,25"/>',
-  Deltoid:'<polygon class="sv-shape" points="100,8 140,42 100,112 60,42"/>',
-  Raute:'<polygon class="sv-shape" points="100,8 132,60 100,112 68,60"/>',
-  Kreis:'<circle class="sv-shape" cx="100" cy="60" r="48"/>'},
- kor:{
-  Würfel:'<rect class="sv-shape" x="55" y="45" width="60" height="60"/><polygon class="sv-shape" points="55,45 80,25 140,25 115,45"/><polygon class="sv-shape" points="115,45 140,25 140,85 115,105"/><path class="sv-hid" d="M80,25V85M80,85L55,105M80,85H140"/>',
-  Quader:'<rect class="sv-shape" x="30" y="58" width="105" height="48"/><polygon class="sv-shape" points="30,58 62,32 167,32 135,58"/><polygon class="sv-shape" points="135,58 167,32 167,80 135,106"/><path class="sv-hid" d="M62,32V80M62,80L30,106M62,80H167"/>',
-  Pyramide:'<polygon class="sv-shape" points="100,12 40,104 130,104"/><polygon class="sv-shape" points="100,12 130,104 165,80"/><path class="sv-hid" d="M40,104L75,80H165M75,80L100,12"/>',
-  Kegel:'<path class="sv-shape" d="M50,95 L100,12 L150,95 A50,13 0 0 1 50,95 Z"/><path class="sv-hid" d="M50,95 A50,13 0 0 1 150,95"/>',
-  Zylinder:'<path class="sv-shape" d="M55,25 V95 A45,12 0 0 0 145,95 V25 Z"/><ellipse class="sv-shape" cx="100" cy="25" rx="45" ry="12"/><path class="sv-hid" d="M55,95 A45,12 0 0 1 145,95"/>',
-  Kugel:'<circle class="sv-shape" cx="100" cy="60" r="48"/><path class="sv-edge" d="M52,60 A48,13 0 0 0 148,60"/><path class="sv-hid" d="M52,60 A48,13 0 0 1 148,60"/>'}};
-function geoName(){const g=Math.random()<.55?'fl':'kor';const names=Object.keys(SH[g]);const a=P(names);
-  return{q:g==='fl'?'Wie heißt diese Fläche?':'Wie heißt dieser Körper?',fig:`<svg viewBox="0 0 200 120" width="240">${SH[g][a]}</svg>`,kind:'choice',
-    opts:[a,...shuffle(names.filter(x=>x!==a)).slice(0,3)],ans:0,sol:`Das ist ${art(a)} <b>${a}</b>.`}}
-const ITEMS=[['Gartenzaun','Strecke'],['Licht einer Taschenlampe','Strahl'],['Maßband','Strecke'],['Geschenkband','Strecke'],['Sonnenstrahl','Strahl'],
- ['Laserstrahl','Strahl'],['Tischkante','Strecke'],['Bleistift','Strecke'],['Licht eines Leuchtturms','Strahl'],['Lineal','Strecke'],['Wasser aus einer Quelle','Strahl']];
+const ITEMS=[['Gartenzaun','Strecke'],['Licht einer Taschenlampe','Strahl'],['Maßband','Strecke'],['Sonnenstrahl','Strahl'],['Laserstrahl','Strahl'],
+ ['Tischkante','Strecke'],['Bleistift','Strecke'],['Licht eines Leuchtturms','Strahl'],['Lineal','Strecke'],['Wasserstrahl','Strahl'],['Flugstrecke Wien – Graz','Strecke']];
 function geoStrahl(){const [t,a]=P(ITEMS);
   return{q:'Strecke oder Strahl?',big:t,kind:'choice',opts:['Strecke','Strahl'],keep:true,ans:a==='Strecke'?0:1,
-    sol:a==='Strecke'?`<b>Strecke</b>: Ein ${t} hat einen Anfang und ein Ende.`:`<b>Strahl</b>: Es beginnt an einem Punkt und geht immer weiter.`}}
+    sol:a==='Strecke'?`<b>Strecke</b>: hat einen Anfangs- und einen Endpunkt.`:`<b>Strahl</b>: beginnt an einem Punkt und geht immer weiter.`}}
 function lineSvg(cx,cy,ang,cls,label){const dx=Math.cos(ang),dy=Math.sin(ang);let s=`<line class="${cls}" x1="${f1(cx-dx*300)}" y1="${f1(cy-dy*300)}" x2="${f1(cx+dx*300)}" y2="${f1(cy+dy*300)}"/>`;
   for(let t=110;t>0;t-=5){for(const sg of [1,-1]){const x=cx+sg*dx*t+(-dy)*13,y=cy+sg*dy*t+dx*13;if(x>10&&x<230&&y>16&&y<136)return s+`<text class="sv-txt" x="${f1(x)}" y="${f1(y)}" text-anchor="middle">${label}</text>`}}return s}
-function geoLage(){const type=P(['par','nor','none']);const a=Math.random()*Math.PI;let b,c2;const cx=120,cy=72;let g,h;
+function geoLage(){const type=P(['par','nor','none']);const a=Math.random()*Math.PI;const cx=120,cy=72;let g,h;
   if(type==='par'){const nx=-Math.sin(a),ny=Math.cos(a),o=R(20,30);g=lineSvg(cx-nx*o,cy-ny*o,a,'sv-l','g');h=lineSvg(cx+nx*o,cy+ny*o,a,'sv-hl','h')}
   else{const d=type==='nor'?Math.PI/2:(R(25,60)*Math.PI/180)*P([1,-1]);const s=R(-25,25);g=lineSvg(cx,cy,a,'sv-l','g');h=lineSvg(cx+Math.cos(a)*s,cy+Math.sin(a)*s,a+d,'sv-hl','h')}
-  const opts=['parallel (g ∥ h)','normal (g ⊥ h)','weder noch'];const ans={par:0,nor:1,none:2}[type];
-  return{q:'Wie liegen die Geraden g und h zueinander?',fig:`<svg viewBox="0 0 240 144" width="300">${g}${h}</svg>`,kind:'choice',opts,keep:true,ans,
-    sol:['<b>Parallel</b>: g und h haben überall den gleichen Abstand und schneiden sich nie.','<b>Normal</b>: g und h schneiden sich im rechten Winkel (90°).','<b>Weder noch</b>: g und h schneiden sich, aber nicht im rechten Winkel.'][ans]}}
-const GZ=[['Wie viele Diagonalen hat ein Rechteck?',2],['Wie viele Diagonalen hat ein Dreieck?',0],['Wie viele Diagonalen hat ein Fünfeck?',5],['Wie viele Diagonalen hat ein Sechseck?',9],
- ['Wie viele Ecken hat ein Würfel?',8],['Wie viele Kanten hat ein Würfel?',12],['Wie viele Flächen hat ein Quader?',6],['Wie viele Kanten hat ein Quader?',12],
- ['Wie viele Ecken hat eine Pyramide mit quadratischer Grundfläche?',5],['Wie viele Kanten hat eine Pyramide mit quadratischer Grundfläche?',8],
- ['Wie viele Flächen hat ein Zylinder?',3],['Wie viele Ecken hat ein Trapez?',4]];
-function geoZahl(){const [t,a]=P(GZ);return{q:'Zähle!',big:`<span style="font-size:.75em">${t}</span>`,kind:'num',ans:a,sol:`Richtig ist <b>${a}</b>.`}}
-
-// ================= Maßstab =================
-function masWirk(){const sc=P([10,20,25,40,50,100,200,250,500,1000,2000,5000,10000,25000,50000,100000]);const pm=R(8,120);const rMM=pm*sc;
-  const [unit,div]=rMM<10000?['cm',10]:rMM<1e6?['m',1000]:['km',1e6];const ans=r6(rMM/div);
-  const step=`${fmt(pm/10)} cm · ${fmt(sc)} = ${fmt(rMM/10)} cm`;
-  return{q:`Maßstab ${scaleTxt(sc)}. Wie lang ist die Strecke in Wirklichkeit?`,big:`am Plan: ${lenTxt(pm)}`,kind:'num',unit,ans,
-    sol:unit==='cm'?`${fmt(pm/10)} cm · ${fmt(sc)} = <b>${fmt(ans)} cm</b>`:`${step} = <b>${fmt(ans)} ${unit}</b>`}}
-function realTxt(cm){return cm>=100000?`${fmt(cm/100000)} km`:cm>=1000?`${fmt(cm/100)} m`:`${fmt(cm)} cm`}
-function masPlan(){const sc=P([10,20,50,100,200,500,1000,10000]);const pmm=R(4,30)*5;const cm=pmm*sc/10;
-  return{q:`Wie lang ist die Strecke am Plan im Maßstab ${scaleTxt(sc)}?`,big:`in Wirklichkeit: ${realTxt(cm)}`,kind:'num',unit:'cm',ans:pmm/10,
-    sol:`${realTxt(cm)} = ${fmt(cm)} cm → ${fmt(cm)} cm : ${fmt(sc)} = <b>${fmt(pmm/10)} cm</b>`}}
-function masBest(){const pc=P([1,2,4,5,10]);const sc=P([100,200,500,1000,2000,5000,10000,20000,25000,50000,100000]);const cm=pc*sc;
-  return{q:'Bestimme den Maßstab!',big:`${realTxt(cm)} in Wirklichkeit sind am Plan ${pc} cm.`,kind:'num',pre:'1 :',ans:sc,
-    sol:`${realTxt(cm)} = ${fmt(cm)} cm → ${fmt(cm)} : ${pc} = ${fmt(sc)} → Maßstab <b>${scaleTxt(sc)}</b>`}}
-function masLeiste(){const k=P([1,2,5,10,25,50]);const sc=k*100000;
-  let s='<line class="sv-l" x1="20" y1="38" x2="230" y2="38"/>';
-  for(let i=0;i<4;i++)if(i%2===0)s+=`<line class="sv-x" x1="${25+i*50}" y1="38" x2="${75+i*50}" y2="38"/>`;
-  for(let i=0;i<=4;i++){const x=25+i*50;s+=`<line class="sv-l" x1="${x}" y1="31" x2="${x}" y2="45"/><text class="sv-txt" x="${x}" y="22" text-anchor="middle">${i?i*k+' km':'0'}</text><text class="sv-sm" x="${x}" y="62" text-anchor="middle">${i?i+' cm':'0'}</text>`}
-  const o=[sc,sc*10,sc/10,sc*4];
-  return{q:'Welcher Maßstab passt zu dieser Maßstabsleiste?',fig:`<svg viewBox="0 0 250 72" width="320">${s}</svg>`,kind:'choice',opts:o.map(scaleTxt),ans:0,
-    sol:`1 cm ≙ ${k} km = ${fmt(sc)} cm → <b>${scaleTxt(sc)}</b>`}}
-function masKm(){const X=P([100000,200000,250000,500000,1000000,2500000]);const c=R(1,6);const ans=r6(X/100000*c);
-  return{q:`Landkarte im Maßstab ${scaleTxt(X)}. Wie viele Kilometer sind ${c} cm auf der Karte?`,big:`${c} cm ≙ ? km`,kind:'num',unit:'km',ans,
-    sol:`1 cm ≙ ${fmt(X)} cm = ${fmt(X/100000)} km (5 Nullen wegstreichen, denn 1 km = 100 000 cm). ${c} cm ≙ <b>${fmt(ans)} km</b>`}}
-
-// ================= Brüche =================
-function fracFig(d,n){
-  if(Math.random()<.5){const st=R(0,d-1);let s='';const cx=60,cy=60,r=54;
-    for(let i=0;i<d;i++){const a0=-Math.PI/2+2*Math.PI*i/d,a1=a0+2*Math.PI/d;const on=((i-st+d)%d)<n;
-      s+=`<path class="${on?'sv-on':'sv-off'}" d="M${cx},${cy} L${f1(cx+r*Math.cos(a0))},${f1(cy+r*Math.sin(a0))} A${r},${r} 0 0 1 ${f1(cx+r*Math.cos(a1))},${f1(cy+r*Math.sin(a1))} Z"/>`}
-    return`<svg viewBox="0 0 120 120" width="170">${s}</svg>`}
-  const L={2:[2,1],3:[3,1],4:P([[2,2],[4,1]]),5:[5,1],6:[3,2],8:[4,2],10:[5,2],12:[4,3]}[d];const cs=34;const on=new Set(shuffle([...Array(d).keys()]).slice(0,n));let s='';
-  for(let i=0;i<d;i++){const x=2+(i%L[0])*cs,y=2+Math.floor(i/L[0])*cs;s+=`<rect class="${on.has(i)?'sv-on':'sv-off'}" x="${x}" y="${y}" width="${cs}" height="${cs}"/>`}
-  return`<svg viewBox="0 0 ${L[0]*cs+4} ${L[1]*cs+4}" width="${Math.min(260,(L[0]*cs+4)*1.3)}">${s}</svg>`}
-function red(n,d){const g=gcd(n,d);return g>1?` = ${fr(n/g,d/g)}`:''}
-function bruAblesen(){const d=P([2,3,4,5,6,8,10,12]);const n=R(1,d-1);
-  return{q:'Welcher Bruchteil ist gefärbt?',fig:fracFig(d,n),kind:'frac',form:'any',ans:{n,d},sol:`${n} von ${d} gleich großen Teilen sind gefärbt: <b>${fr(n,d)}</b>${red(n,d)}`}}
-function bruGem(){const d=R(2,9),w=R(1,6),r=R(1,d-1),n=w*d+r;
-  return{q:'Schreibe als gemischte Zahl!',big:`${fr(n,d)} = ?`,kind:'frac',form:'mixed',ans:{n,d},sol:`${n} : ${d} = ${w} Rest ${r} → <b>${mx(w,r,d)}</b>`}}
-function bruUnecht(){const d=R(2,9),w=R(1,9),r=R(1,d-1),n=w*d+r;
-  return{q:'Verwandle in einen unechten Bruch!',big:`${mx(w,r,d)} = ?`,kind:'frac',form:'improper',ans:{n,d},sol:`${w} · ${d} + ${r} = ${n} → <b>${fr(n,d)}</b>`}}
-function bruKuerzen(){let a,b,k;
-  if(Math.random()<.25){[a,b]=P([[4,10],[8,10],[25,100],[12,100],[5,100],[50,1000],[125,1000],[40,1000],[250,1000],[75,100]]);const g=gcd(a,b);k=g;a/=g;b/=g}
-  else{do{b=R(2,12);a=R(1,b-1)}while(gcd(a,b)!==1);k=R(2,Math.max(2,Math.floor(100/b)))}
-  return{q:'Kürze so weit wie möglich!',big:`${fr(a*k,b*k)} = ?`,kind:'frac',form:'reduced',ans:{n:a,d:b},sol:`Zähler und Nenner durch ${k}: <b>${fr(a,b)}</b>`}}
-function bruErw(){let a,b;do{b=R(2,10);a=R(1,b-1)}while(gcd(a,b)!==1);const k=R(2,6);const top=Math.random()<.6;
-  return{q:'Ergänze die fehlende Zahl!',big:`${fr(a,b)} = ${top?fr(hole,b*k):fr(a*k,hole)}`,kind:'num',ans:top?a*k:b*k,
-    sol:`Erweitert mit ${k}: ${fr(a,b)} = <b>${fr(a*k,b*k)}</b>`}}
-function bruVergl(){const b=R(2,10),a=R(1,b+2);let c,d;
-  if(Math.random()<.25){const k=R(2,4);c=a*k;d=b*k}else{do{d=R(2,10);c=R(1,d+2)}while(c*b===a*d&&gcd(c,d)===1&&gcd(a,b)===1)}
-  const L=lcm(b,d);const x=a*L/b,y=c*L/d;const s=x<y?'<':x>y?'>':'=';const e=s==='<'?'&lt;':s==='>'?'&gt;':'=';
-  return{q:'Setze &lt;, = oder &gt; ein!',big:`${fr(a,b)} ${hole} ${fr(c,d)}`,kind:'cmp',ans:s,
-    sol:`Gleicher Nenner: ${fr(a,b)} = ${fr(x,L)} und ${fr(c,d)} = ${fr(y,L)} → <b>${fr(a,b)} ${e} ${fr(c,d)}</b>`}}
-function bruVon(){const t=R(0,2);
-  if(t===1){const b=P([2,4,5,8,10]);const a=R(1,b-1);const ans=1000*a/b;return{q:'Gib den Bruchteil in Gramm an!',big:`${fr(a,b)} kg = ? g`,kind:'num',unit:'g',ans,sol:`1 kg = 1000 g → 1000 : ${b} · ${a} = <b>${fmt(ans)} g</b>`}}
-  if(t===2){const b=P([2,3,4,5,6,10,12]);const a=R(1,b-1);const ans=60*a/b;return{q:'Gib den Bruchteil in Minuten an!',big:`${fr(a,b)} h = ? min`,kind:'num',unit:'min',ans,sol:`1 h = 60 min → 60 : ${b} · ${a} = <b>${ans} min</b>`}}
-  const b=R(2,13),a=R(1,b-1),tot=b*R(3,60),ans=tot/b*a;
-  return{q:'Berechne den Bruchteil!',big:`${fr(a,b)} von ${fmt(tot)} = ?`,kind:'num',ans,sol:`${fmt(tot)} : ${b} = ${fmt(tot/b)} → ${fmt(tot/b)} · ${a} = <b>${fmt(ans)}</b>`}}
-function bruGanz(){const b=R(2,15),a=R(1,b-1),whole=b*R(3,40),v=whole/b*a;
-  return{q:'Berechne das Ganze!',big:`${fr(a,b)} sind ${fmt(v)}`,kind:'num',ans:whole,sol:`${fmt(v)} : ${a} = ${fmt(v/a)} (das ist ${fr(1,b)}) → ${fmt(v/a)} · ${b} = <b>${fmt(whole)}</b>`}}
-function bruArt(){const t=R(0,2);let big,d,n,w;
-  if(t===0){d=R(2,12);n=R(1,d-1);big=fr(n,d)}else if(t===1){d=R(2,9);do{n=R(d+1,d*5)}while(n%d===0);big=fr(n,d)}else{d=R(2,9);n=R(1,d-1);w=R(1,9);big=mx(w,n,d)}
-  return{q:'Was für ein Bruch ist das?',big,kind:'choice',opts:['echter Bruch','unechter Bruch','gemischte Zahl'],keep:true,ans:t,
-    sol:['<b>Echter Bruch</b>: Der Zähler ist kleiner als der Nenner, der Bruch ist kleiner als 1.','<b>Unechter Bruch</b>: Der Zähler ist größer als der Nenner, der Bruch ist größer als 1.','<b>Gemischte Zahl</b>: eine ganze Zahl und ein echter Bruch.'][t]}}
-function bruStrahl(){const max=P([1,1,2]),d=P([2,3,4,5,6,8,10]);let k;do{k=R(1,max*d-1)}while(k%d===0);
-  const x0=20,len=250,n=max*d;let s=`<line class="sv-l" x1="${x0}" y1="40" x2="${x0+len+18}" y2="40"/><path class="sv-l" d="M${x0+len+10},34 L${x0+len+18},40 L${x0+len+10},46"/>`;
-  for(let i=0;i<=n;i++){const x=x0+i*len/n,big=i%d===0;s+=`<line class="sv-l" x1="${f1(x)}" y1="${big?30:34}" x2="${f1(x)}" y2="${big?50:46}"/>`;if(big)s+=`<text class="sv-txt" x="${f1(x)}" y="68" text-anchor="middle">${i/d}</text>`}
-  const xm=x0+k*len/n;s+=`<path class="sv-x" d="M${f1(xm-6)},${34-12} l12,12 M${f1(xm+6)},${34-12} l-12,12"/>`;
-  return{q:'Welcher Bruch ist markiert?',fig:`<svg viewBox="0 0 300 76" width="340">${s}</svg>`,kind:'frac',form:'any',whole:max>1,ans:{n:k,d},
-    sol:`Die Einheit ist in ${d} gleiche Teile geteilt. Das Kreuz ist beim ${k}. Teilstrich: <b>${fr(k,d)}</b>${k>d?` = ${mx(Math.floor(k/d),k%d,d)}`:''}${red(k,d)}`}}
-function bruRest(){const b=R(2,20),a=R(1,b-1);
-  return{q:'Welcher Bruchteil fehlt auf ein Ganzes?',big:`${fr(a,b)} + ? = 1`,kind:'frac',form:'any',ans:{n:b-a,d:b},sol:`1 = ${fr(b,b)} → ${fr(b,b)} − ${fr(a,b)} = <b>${fr(b-a,b)}</b>`}}
-
-// ================= Kreis =================
-function kreRD(){const r=R(12,60),d=2*r;
-  if(Math.random()<.5)return{q:'Wie groß ist der Radius?',big:`d = ${lenTxt(d)}`,kind:'num',pre:'r =',unit:'mm',ans:r,sol:`r = d : 2 = ${d} mm : 2 = <b>${r} mm</b>`};
-  return{q:'Wie groß ist der Durchmesser?',big:`r = ${lenTxt(r)}`,kind:'num',pre:'d =',unit:'mm',ans:d,sol:`d = 2 · r = 2 · ${r} mm = <b>${d} mm</b>`}}
-const KDEF={Mittelpunkt:'Der Mittelpunkt ist von allen Punkten der Kreislinie gleich weit entfernt.',Radius:'Der Radius verbindet den Mittelpunkt mit der Kreislinie.',
- Durchmesser:'Der Durchmesser geht durch den Mittelpunkt von Rand zu Rand. d = 2 · r',Sehne:'Eine Sehne ist eine Strecke zwischen zwei Punkten der Kreislinie.',
- Sekante:'Eine Sekante ist eine Gerade, die den Kreis in zwei Punkten schneidet.',Tangente:'Eine Tangente berührt den Kreis in genau einem Punkt.',
- Passante:'Eine Passante geht am Kreis vorbei, ohne ihn zu berühren.',Kreissektor:'Ein Kreissektor wird von zwei Radien und einem Kreisbogen begrenzt – wie ein Tortenstück.',
- Kreissegment:'Ein Kreissegment wird von einer Sehne und einem Kreisbogen begrenzt.'};
-function kreTeile(){const cx=110,cy=80,r=55;const names=Object.keys(KDEF);const a=P(names);const ang=Math.random()*Math.PI*2;
-  const pt=t=>[cx+r*Math.cos(t),cy+r*Math.sin(t)];const L=(p,q,c='sv-hl')=>`<line class="${c}" x1="${f1(p[0])}" y1="${f1(p[1])}" x2="${f1(q[0])}" y2="${f1(q[1])}"/>`;let el='';
-  const p1=pt(ang);
-  if(a==='Mittelpunkt')el=`<circle class="sv-tf" cx="${cx}" cy="${cy}" r="6"/>`;
-  else if(a==='Radius')el=L([cx,cy],p1);
-  else if(a==='Durchmesser')el=L(pt(ang+Math.PI),p1);
-  else if(a==='Sehne'||a==='Sekante'){const p2=pt(ang+R(70,130)*Math.PI/180);if(a==='Sehne')el=L(p1,p2);else{const vx=p2[0]-p1[0],vy=p2[1]-p1[1],l=Math.hypot(vx,vy),e=38;el=L([p1[0]-vx/l*e,p1[1]-vy/l*e],[p2[0]+vx/l*e,p2[1]+vy/l*e])}}
-  else if(a==='Tangente'||a==='Passante'){const dist=a==='Tangente'?r:r+16;const c=[cx+dist*Math.cos(ang),cy+dist*Math.sin(ang)];const tx=-Math.sin(ang),ty=Math.cos(ang),h=58;el=L([c[0]-tx*h,c[1]-ty*h],[c[0]+tx*h,c[1]+ty*h])}
-  else{const p2=pt(ang+R(70,120)*Math.PI/180);el=a==='Kreissektor'?`<path class="sv-hlf" d="M${cx},${cy} L${f1(p1[0])},${f1(p1[1])} A${r},${r} 0 0 1 ${f1(p2[0])},${f1(p2[1])} Z"/>`:`<path class="sv-hlf" d="M${f1(p1[0])},${f1(p1[1])} A${r},${r} 0 0 1 ${f1(p2[0])},${f1(p2[1])} Z"/>`}
-  const cross=a==='Mittelpunkt'?'':`<path class="sv-l" d="M${cx-4},${cy-4} l8,8 M${cx+4},${cy-4} l-8,8"/>`;
-  return{q:'Wie heißt das farbig markierte Kreisteil?',fig:`<svg viewBox="0 -10 220 180" width="260"><circle class="sv-c" cx="${cx}" cy="${cy}" r="${r}"/>${el}${cross}</svg>`,kind:'choice',
-    opts:[a,...shuffle(names.filter(x=>x!==a)).slice(0,3)],ans:0,sol:`<b>${a}</b>: ${KDEF[a]}`}}
-const KWF=[['Der Kreis hat einen Mittelpunkt.',1],['Der Radius ist eine Gerade – also ohne Anfangs- und Endpunkt.',0],['Ein Kreissektor schaut wie ein Tortenstück aus.',1],
- ['Der Radius ist die Hälfte des Durchmessers.',1],['Eine Tangente schneidet den Kreis in zwei Punkten.',0],['Eine Passante berührt den Kreis nicht.',1],
- ['Der Durchmesser ist die längste Sehne im Kreis.',1],['Eine Sekante berührt den Kreis in genau einem Punkt.',0],['Alle Punkte der Kreislinie sind gleich weit vom Mittelpunkt entfernt.',1],
- ['Der Durchmesser ist halb so lang wie der Radius.',0],['Konzentrische Kreise haben denselben Mittelpunkt.',1],['Die Tangente steht im Berührpunkt normal auf den Radius.',1],
- ['Ein Kreissegment wird von zwei Radien begrenzt.',0]];
-function kreWF(){const [t,w]=P(KWF);return{q:'Wahr oder falsch?',big:`<span style="font-size:.72em">${t}</span>`,kind:'choice',opts:['wahr','falsch'],keep:true,ans:w?0:1,
-  sol:w?'Die Aussage ist <b>wahr</b>.':'Die Aussage ist <b>falsch</b>.'}}
-function kreSechs(){const r=R(25,50);return{q:'Ein regelmäßiges Sechseck wird in einen Kreis konstruiert. Wie lang ist eine Seite des Sechsecks?',big:`r = ${lenTxt(r)}`,kind:'num',unit:'mm',ans:r,
-  sol:`Im Sechseck ist jede Seite genau so lang wie der Radius: <b>${r} mm</b>`}}
-
-// ================= Dezimalzahlen dividieren =================
-function dezKomma(){const q=R(2,12),k=R(2,9),m=P([1,1,2]);const s=10**m;const a=q*k/s,b=k/s;
-  return{q:'Verschiebe das Komma und rechne im Kopf!',big:`${fmt(a)} : ${fmt(b)} = ?`,kind:'num',ans:q,sol:`Bei beiden Zahlen das Komma um ${m} Stelle${m>1?'n':''} nach rechts: ${q*k} : ${k} = <b>${q}</b>`}}
-function divNums(){let B;do{B=R(2,25)}while(B%10===0);let Q;do{Q=R(105,2499)}while(Q%10===0);return{a:Q*B/1000,b:B/10,q:Q/100,B,Q}}
-function dezDiv(){if(Math.random()<.4){const b=R(2,9),Q=R(101,4999),a=Q*b/100;return{q:'Löse die Division!',big:`${fmt(a)} : ${b} = ?`,kind:'num',ans:Q/100,sol:`${fmt(a)} : ${b} = <b>${fmt(Q/100)}</b>`}}
-  const {a,b,q,B,Q}=divNums();return{q:'Löse die Division!',big:`${fmt(a)} : ${fmt(b)} = ?`,kind:'num',ans:q,sol:`Komma um 1 Stelle nach rechts: ${fmt(Q*B/100)} : ${B} = <b>${fmt(q)}</b>`}}
-function dezUeber(){const {a,b,q}=divNums();const o=[q,r6(q*10),r6(q/10),r6(q*100)];
-  return{q:'Finde mit Überschlag das richtige Ergebnis!',big:`${fmt(a)} : ${fmt(b)} = ?`,kind:'choice',opts:o.map(fmt),ans:0,
-    sol:`Überschlag: ${fmt(sig1(a))} : ${fmt(sig1(b))} ≈ ${fmt(r6(sig1(a)/sig1(b)))} → <b>${fmt(q)}</b>`}}
-function dezRunden(){let a,b,x;do{a=R(100,9999)/100;b=P([0.3,0.7,1.3,1.7,0.6,0.9,1.1,0.13,0.26,0.047]);x=a/b}while(Math.abs(x*100-Math.floor(x*100)-.5)<1e-4);
-  const ans=Math.round(x*100)/100;const tr=(Math.floor(x*1000)/1000).toFixed(3).replace('.',',');
-  return{q:'Runde das Ergebnis auf Hundertstel!',big:`${fmt(a)} : ${fmt(b)} ≈ ?`,kind:'num',ans,sol:`${fmt(a)} : ${fmt(b)} = ${tr}… → Tausendstel ${tr.slice(-1)} → ${+tr.slice(-1)>=5?'aufrunden':'abrunden'}: <b>${fmt(ans)}</b>`}}
-function dezFehlt(){const {a,b,q}=divNums();const t=R(0,2);const rows=[['Dividend',a],['Divisor',b],['Quotient',q]];
-  const tbl=`<table class="dt">${rows.map((r,i)=>`<tr><td>${r[0]}</td><td>${i===t?hole:fmt(r[1])}</td></tr>`).join('')}</table>`;
-  const sol=t===0?`Dividend = Quotient · Divisor = ${fmt(q)} · ${fmt(b)} = <b>${fmt(a)}</b>`:t===1?`Divisor = Dividend : Quotient = ${fmt(a)} : ${fmt(q)} = <b>${fmt(b)}</b>`:`Quotient = ${fmt(a)} : ${fmt(b)} = <b>${fmt(q)}</b>`;
-  return{q:'Berechne den fehlenden Teil der Division!',big:tbl,kind:'num',ans:rows[t][1],sol}}
+  const ans={par:0,nor:1,none:2}[type];
+  return{q:'Wie liegen die Geraden g und h zueinander?',fig:`<svg viewBox="0 0 240 144" width="300">${g}${h}</svg>`,kind:'choice',opts:['parallel (g ∥ h)','normal (g ⊥ h)','weder noch'],keep:true,ans,
+    sol:['<b>Parallel</b>: g und h haben überall den gleichen Abstand und treffen einander nie.','<b>Normal</b>: g und h schneiden einander im rechten Winkel.','<b>Weder noch</b>: g und h schneiden einander, aber nicht im rechten Winkel.'][ans]}}
+const GWF=[['Eine Strecke hat einen Anfangs- und einen Endpunkt.',1],['Eine Gerade wird mit einem Großbuchstaben bezeichnet.',0],['Messen kann man nur die Länge einer Strecke.',1],
+ ['Parallele Geraden treffen einander nie.',1],['Der Abstand ist die kürzeste Verbindung zwischen einem Punkt und einer Geraden.',1],['Ein Strahl hat einen Endpunkt, aber keinen Anfangspunkt.',0],
+ ['g ⊥ h bedeutet: g ist parallel zu h.',0],['Durch zwei Punkte kann man genau eine Gerade zeichnen.',1],['Linien sind eindimensional.',1],['Punkte werden mit Kleinbuchstaben bezeichnet.',0],
+ ['Eine waagrechte und eine lotrechte Linie stehen normal aufeinander.',1],['Eine Gerade kann man mit dem Lineal genau abmessen.',0],['Die Normale auf eine Gerade bildet mit ihr einen rechten Winkel.',1]];
+function geoWF(){const [t,w]=P(GWF);return{q:'Wahr oder falsch?',big:`<span style="font-size:.72em">${t}</span>`,kind:'choice',opts:['wahr','falsch'],keep:true,ans:w?0:1,sol:w?'Die Aussage ist <b>wahr</b>.':'Die Aussage ist <b>falsch</b>.'}}
+const GZ=[['Wie viele Geraden kann man durch zwei verschiedene Punkte zeichnen?',1],['Drei Punkte A, B und C liegen nicht auf einer Linie. Du zeichnest jeweils durch zwei Punkte eine Gerade. Wie viele Geraden entstehen?',3],
+ ['Vier Punkte, von denen keine drei auf einer Linie liegen: Wie viele Geraden durch je zwei Punkte gibt es?',6],['In wie vielen Punkten können sich zwei verschiedene Geraden höchstens schneiden?',1],
+ ['Wie viele Schnittpunkte haben zwei parallele Geraden?',0],['Drei Geraden: Wie viele Schnittpunkte kann es höchstens geben?',3],['Wie viele Endpunkte hat eine Strecke?',2],
+ ['Wie viele Anfangspunkte hat ein Strahl?',1],['Wie viele rechte Winkel entstehen, wenn zwei Geraden normal aufeinander stehen?',4],['Wie viele Blockbuchstaben im Wort LEHM bestehen nur aus geraden Linien?',4],
+ ['Wie viele Blockbuchstaben im Wort BOX bestehen nur aus geraden Linien?',1]];
+function geoZahl(){const [t,a]=P(GZ);return{q:'Überlege!',big:`<span style="font-size:.7em">${t}</span>`,kind:'num',ans:a,sol:`Richtig ist <b>${a}</b>.`}}
+function geoMM(){const L=P(['AB','CD','EF','GH']);if(Math.random()<.6){const c=R(1,15),m=R(1,9);return{q:'Rechne die Streckenlänge in Millimeter um!',big:`${L} = ${c} cm ${m} mm`,kind:'num',unit:'mm',ans:c*10+m,sol:`${c} cm = ${c*10} mm → ${c*10} + ${m} = <b>${c*10+m} mm</b>`}}
+  const c=R(2,20);return{q:'Rechne die Streckenlänge in Millimeter um!',big:`${L} = ${c} cm`,kind:'num',unit:'mm',ans:c*10,sol:`1 cm = 10 mm → <b>${c*10} mm</b>`}}
+function geoAbstand(){const x0=R(105,145),y0=R(26,40),gy=116;const ends=shuffle([x0-R(60,85),x0,x0+R(60,85)]);
+  let s=`<line class="sv-l" x1="8" y1="${gy}" x2="252" y2="${gy}"/><text class="sv-txt" x="244" y="${gy-7}">g</text>`;
+  ends.forEach((x,i)=>{s+=`<line class="sv-hl" x1="${x0}" y1="${y0}" x2="${x}" y2="${gy}"/><text class="sv-txt" x="${x}" y="${gy+19}" text-anchor="middle">${i+1}</text>`});
+  s+=`<path class="sv-x" d="M${x0-5},${y0-5} l10,10 M${x0+5},${y0-5} l-10,10"/><text class="sv-txt" x="${x0+9}" y="${y0-6}">A</text>`;
+  const ans=ends.indexOf(x0);
+  return{q:'Welche Strecke zeigt den Abstand des Punktes A von der Geraden g?',fig:`<svg viewBox="0 0 260 142" width="300">${s}</svg>`,kind:'choice',opts:['Strecke 1','Strecke 2','Strecke 3'],keep:true,ans,
+    sol:`<b>Strecke ${ans+1}</b>: Der Abstand ist die kürzeste Verbindung – sie steht normal auf g.`}}
 
 // ================= Themen =================
 const TOPICS={
-  nat:{name:'Natürliche Zahlen',chip:'123',sub:'Stellenwert, Runden, Vergleichen, Überschlag',pages:'Buch S. 16–20',gens:[natStellen,natWert,natRunden,natVergl,natZwischen,natUeber,natX]},
-  geo:{name:'Geometrie',chip:'△',sub:'Strecke, Strahl, Gerade, Flächen, Körper, parallel und normal',pages:'Buch S. 48–51',gens:[geoRaetsel,geoName,geoStrahl,geoLage,geoZahl]},
-  mas:{name:'Maßstab',chip:'1:10',sub:'Plan und Wirklichkeit, Maßstabsleiste',pages:'Buch S. 47 und 51',gens:[masWirk,masPlan,masBest,masLeiste,masKm]},
-  bru:{name:'Brüche',chip:'¾',sub:'Ablesen, Kürzen, Erweitern, Vergleichen, Bruchteile',pages:'Buch S. 52–63',gens:[bruAblesen,bruGem,bruUnecht,bruKuerzen,bruErw,bruVergl,bruVon,bruGanz,bruArt,bruStrahl,bruRest]},
-  kre:{name:'Kreis',chip:'◯',sub:'Radius, Durchmesser, Sehne, Tangente',pages:'Buch S. 64–65',gens:[kreRD,kreTeile,kreWF,kreSechs]},
-  dez:{name:'Dezimalzahlen dividieren',chip:'0,5',sub:'Komma verschieben, Überschlag, Runden',pages:'Buch S. 87–89',gens:[dezKomma,dezDiv,dezUeber,dezRunden,dezFehlt]},
+  stw:{name:'Stellenwert & Zahlensystem',chip:'5T',sub:'Stellenwert, dekadische Einheiten, Mio. und Mrd.',pages:'Buch S. 38–39',gens:[stwWert,natStellen,stwZerlegen,stwEinheit,stwPasst,stwMio,stwForm,natVergl]},
+  rom:{name:'Römische Zahlen',chip:'XIV',sub:'Lesen, schreiben, vergleichen',pages:'Buch S. 40–41',gens:[romLesen,romLesen,romSchreiben,romSchreiben,romVergl,romJahr,romRegel]},
+  run:{name:'Runden, Schätzen, Überschlag',chip:'≈',sub:'Runden, Rundungsfehler, mindestens / höchstens',pages:'Buch S. 42–47',gens:[natRunden,natRunden,runFuehrend,runFehler,runMinMax,runPruef,natUeber,runUeberMal]},
+  add:{name:'Addieren & Subtrahieren',chip:'+−',sub:'Schriftlich, Fachausdrücke, Rechengesetze',pages:'Buch S. 48–51',gens:[addSchrift,subSchrift,addBegriffe,natX,addVorteil,addGesetz]},
+  mul:{name:'Multiplizieren & Dividieren',chip:'·:',sub:'Nullen, schriftlich, Division mit Rest',pages:'Buch S. 52–57',gens:[mulNull,mul10,divNull,mulSchrift,divOhne,divRest,divRest,mulBegriffe,mulFehler,mulNah100]},
+  vgr:{name:'Vier Grundrechnungsarten',chip:'( )',sub:'Punkt vor Strich, Klammern, Verteilungsgesetz',pages:'Buch S. 58–61',gens:[vgrPunkt,vgrPunkt,vgrKlammer,vgrText,vgrDistri,vgrPassend,vgrVar]},
+  all:{name:'Alltagsaufgaben',chip:'€',sub:'Textaufgaben mit natürlichen Zahlen',pages:'Buch S. 62–63',gens:[alltag]},
+  geo:{name:'Punkt, Gerade, Strecke, Strahl',chip:'⊥',sub:'Normal, parallel, Abstand',pages:'Buch S. 86–89',gens:[geoRaetsel,geoStrahl,geoLage,geoLage,geoWF,geoZahl,geoMM,geoAbstand]},
   mix:{name:'Gemischt',chip:'?!',sub:'Aufgaben aus allen Themen',pages:'Wiederholung',gens:[]}};
+
 let lastGen=null;
 function makeTask(topic){const tk=topic==='mix'?P(Object.keys(TOPICS).filter(k=>k!=='mix')):topic;let g,tries=0;
   do{g=P(TOPICS[tk].gens);tries++}while(g===lastGen&&tries<6);lastGen=g;const t=g();t.topic=tk;
   if(t.kind==='choice'){t.order=t.keep?t.opts.map((_,i)=>i):shuffle(t.opts.map((_,i)=>i))}return t}
-function ansTxt(t){if(t.kind==='num')return(t.pre?t.pre+' ':'')+fmt(t.ans)+(t.unit?' '+t.unit:'');if(t.kind==='frac')return t.form==='mixed'?mx(Math.floor(t.ans.n/t.ans.d),t.ans.n%t.ans.d,t.ans.d):fr(t.ans.n,t.ans.d);
+function ansTxt(t){if(t.kind==='roman')return toRom(t.ans);if(t.kind==='qr')return `${fmt(t.ans.q)} Rest ${t.ans.r}`;if(t.kind==='num')return(t.pre?t.pre+' ':'')+fmt(t.ans)+(t.unit?' '+t.unit:'');if(t.kind==='frac')return t.form==='mixed'?mx(Math.floor(t.ans.n/t.ans.d),t.ans.n%t.ans.d,t.ans.d):fr(t.ans.n,t.ans.d);
   if(t.kind==='cmp')return{'<':'&lt;','>':'&gt;','=':'='}[t.ans];return t.opts[t.ans]}
 
 // ================= Ton =================
@@ -504,6 +551,8 @@ function showTask(){const t=G.tasks[G.i];setT(t.topic);G.state='ask';
   $('fb').hidden=true;$('next').hidden=true;const f=$('ans');
   if(t.kind==='num'){f.innerHTML=`<div class="inrow">${t.pre?`<span class="pre">${t.pre}</span>`:''}<input class="num" id="inNum" type="text" inputmode="decimal" autocomplete="off" aria-label="Deine Antwort">${t.unit?`<span class="unit">${t.unit}</span>`:''}<button class="check" type="submit">Prüfen</button></div><div class="hint" id="hint"></div>`}
   else if(t.kind==='frac'){const w=t.form==='mixed'||t.whole;f.innerHTML=`<div class="inrow"><div class="fracin">${w?'<input class="w" id="fw" inputmode="numeric" aria-label="Ganze">':''}<div class="stack"><input id="fn" inputmode="numeric" aria-label="Zähler"><hr><input id="fd" inputmode="numeric" aria-label="Nenner"></div></div><button class="check" type="submit">Prüfen</button></div><div class="hint" id="hint"></div>`}
+  else if(t.kind==='roman'){f.innerHTML=`<div class="inrow"><input class="num" id="inNum" type="text" autocapitalize="characters" autocomplete="off" spellcheck="false" aria-label="Römische Zahl" style="text-transform:uppercase"><button class="check" type="submit">Prüfen</button></div><div class="hint" id="hint"></div>`}
+  else if(t.kind==='qr'){f.innerHTML=`<div class="inrow"><input class="num" id="inQ" inputmode="numeric" aria-label="Quotient" style="max-width:150px"><span class="unit">Rest</span><input class="num" id="inR" inputmode="numeric" aria-label="Rest" style="max-width:100px"><button class="check" type="submit">Prüfen</button></div><div class="hint" id="hint"></div>`}
   else if(t.kind==='cmp'){f.innerHTML=`<div class="opts cmp">${['<','=','>'].map(s=>`<button type="button" data-v="${s}">${s==='<'?'&lt;':s==='>'?'&gt;':'='}</button>`).join('')}</div>`}
   else{f.innerHTML=`<div class="opts">${t.order.map(i=>`<button type="button" data-v="${i}">${t.opts[i]}</button>`).join('')}</div>`}
   const first=f.querySelector('input');if(first)try{first.focus({preventScroll:true})}catch(e){}}
@@ -512,6 +561,12 @@ function parseNum(s,ans){s=s.replace(/[\s  ]/g,'').replace('−','-');if(!s)r
   const v=Number(s);return Number.isFinite(v)?v:NaN}
 function hint(m){$('hint').textContent=m}
 function submit(){const t=G.tasks[G.i];if(G.state!=='ask')return;
+  if(t.kind==='roman'){const v=$('inNum').value.toUpperCase().replace(/[\s.]/g,'');if(!v){$('inNum').focus();return}
+    if(!/^[IVXLCDM]+$/.test(v)){hint('Verwende nur die Zeichen I, V, X, L, C, D und M.');return}
+    return finish(v===toRom(t.ans)||(fromRom(v)===t.ans&&!/(.)\1\1\1/.test(v)&&!/([VLD]).*\1/.test(v)))}
+  if(t.kind==='qr'){const q=$('inQ').value.replace(/[\s.\u202f]/g,''),r=$('inR').value.trim()||'0';if(!q){$('inQ').focus();return}
+    if(!/^\d+$/.test(q)||!/^\d+$/.test(r)){hint('Bitte nur ganze Zahlen eintragen.');return}
+    return finish(+q===t.ans.q&&+r===t.ans.r)}
   if(t.kind==='num'){const v=parseNum($('inNum').value,t.ans);if(v===null){$('inNum').focus();return}if(Number.isNaN(v)){hint('Bitte nur eine Zahl eintragen.');return}
     return finish(Math.abs(v-t.ans)<1e-7*Math.max(1,Math.abs(t.ans)))}
   if(t.kind==='frac'){const wv=$('fw')?$('fw').value.trim():'',nv=$('fn').value.trim(),dv=$('fd').value.trim();
